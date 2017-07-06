@@ -1,0 +1,20 @@
+"loupgg"
+{
+        "base"		"sandbox"
+	"title"		"LoupGG"
+	"maps"		"^lgg_"
+	"menusystem"	"1"
+	"workshopid"	"15895"
+
+	"settings"
+	{
+		1
+		{
+			"name"		"lgg_example"
+			"text"		"example"
+			"help"		"example"
+			"type"		"Numeric"
+			"default"	"42"
+		}
+	}
+}
