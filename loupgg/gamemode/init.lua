@@ -1,10 +1,17 @@
 AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 AddCSLuaFile("fonts.lua")
+AddCSLuaFile("commands.lua")
 
 local GM = GM
 
 include("shared.lua")
+include("commands.lua")
+
+-- init data folder
+if !file.Exists("loupgg","DATA") then file.CreateDir("loupgg") end
+if !file.Exists("loupgg/maps","DATA") then file.CreateDir("loupgg/maps") end
+
 
 util.AddNetworkString("gm_chat")
 util.AddNetworkString("gm_countdown")
@@ -65,14 +72,53 @@ function GM:SetPhase(phase)
   net.Broadcast()
 end
 
+function GM:GetVillagerSeats()
+  local r = {}
+  for k,v in pairs(ents.FindByClass("prop_vehicle_prisoner_pod")) do
+    if v:GetModel() == "models/nova/airboat_seat.mdl" then
+      table.insert(r, v)
+    end
+  end
+
+  return r
+end
+
+function GM:SetTeam(ply, team)
+  ply:SetTeam(team)
+
+  if nteam == TEAM.VILLAGER then
+    GM:PlayerChat(ply, Color(0,255,0), "You are a villager.")
+  elseif nteam == TEAM.WEREWOLF then
+    GM:PlayerChat(ply, Color(255,0,0), "You are a werewolf.")
+  end
+end
+
 -- events
 
 function GM:DoNextPhase()
   local phase = GM.game.phase
   if phase == PHASE.LOBBY then
     local pcount = table.Count(GM.game.players)
-    if pcount >= 1 then
+    local seats = GM:GetVillagerSeats()
+    if pcount >= 1 and #seats >= pcount then
       GM:Chat(Color(0,255,0), "Begin game, "..pcount.." players registered.")
+
+      local seat_count = 1
+      -- give roles to players
+      for k,v in pairs(GM.game.players) do
+        local p = player.GetBySteamID64(k)
+        if p then
+          if math.random(0,2) == 0 then
+            GM:SetTeam(p, TEAM.WEREWOLF)
+          else
+            GM:SetTeam(p, TEAM.VILLAGER)
+          end
+
+          p:EnterVehicle(seats[seat_count])
+          seat_count = seat_count+1
+        end
+      end
+
       GM:SetPhase(PHASE.DAY_VOTE)
       GM:AddCountdown(20) -- add 120s
     else
@@ -91,6 +137,10 @@ function GM:ShowTeam(ply)
     GM.game.players[id64] = true
     GM:Chat(ply:Nick().." registered for the next game.")
   end
+end
+
+function GM:CanExitVehicle(ply, veh)
+  return false
 end
 
 function GM:PlayerInitialSpawn(ply) 
@@ -113,34 +163,41 @@ function GM:PlayerInitialSpawn(ply)
   end
 end
 
-function GM:PlayerSpawn(ply)
-end
-
 function GM:OnPhaseChange(pphase,nphase)
   if nphase == PHASE.LOBBY then
-    GM:Chat("You can join the next game by pressing F2.")
-  elseif nphase == PHASE.DAY_VOTE then
-    -- give roles to players
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
       if p then
-        if math.random(0,2) == 0 then
-          GM:PlayerJoinTeam(p, TEAM.WEREWOLF)
-        else
-          GM:PlayerJoinTeam(p, TEAM.VILLAGER)
-        end
+        p:ExitVehicle()
       end
     end
 
+    GM.game.players = {}
+    GM:Chat("You can join the next game by pressing F2.")
+  elseif nphase == PHASE.DAY_VOTE then 
     GM:Chat(Color(255,255,0), "The sun is rising on the village.")
   end
 end
 
-function GM:OnPlayerChangedTeam(ply, pteam, nteam)
-  if nteam == TEAM.VILLAGER then
-    GM:PlayerChat(ply, Color(0,255,0), "You are a villager.")
-  elseif nteam == TEAM.WEREWOLF then
-    GM:PlayerChat(ply, Color(255,0,0), "You are a werewolf.")
+function GM:InitPostEntity() -- load map
+  -- load map 
+  local fname = "loupgg/maps/"..game.GetMap()..".txt"
+  if file.Exists(fname,"DATA") then
+    local data = util.JSONToTable(file.Read(fname,"DATA"))
+    for k,v in pairs(data) do
+      local ent = ents.Create("prop_vehicle_prisoner_pod")
+      ent:SetModel("models/nova/airboat_seat.mdl")
+      ent:SetKeyValue("vehiclescript", "scripts/vehicles/prisoner_pod.txt")
+      ent:SetPos(Vector(v[1],v[2],v[3]))
+      ent:SetAngles(Angle(v[4],v[5],v[6]))
+      ent:Spawn()
+      local phy = ent:GetPhysicsObject()
+      if phy and phy:IsValid() then
+        phy:EnableMotion(false)
+      end
+    end
+
+    print("LoupGG: "..table.Count(data).." seats loaded.")
   end
 end
 
