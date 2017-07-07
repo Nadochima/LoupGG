@@ -5,6 +5,7 @@ AddCSLuaFile("commands.lua")
 AddCSLuaFile("gui.lua")
 
 local GM = GM
+LoupGG = GM
 
 include("shared.lua")
 include("commands.lua")
@@ -115,13 +116,14 @@ function GM:DoNextPhase()
             GM:SetTeam(p, TEAM.VILLAGER)
           end
 
+          p:SetAllowWeaponsInVehicle(true)
           p:EnterVehicle(seats[seat_count])
           seat_count = seat_count+1
         end
       end
 
       GM:SetPhase(PHASE.DAY_VOTE)
-      GM:AddCountdown(20) -- add 120s
+      GM:AddCountdown(120) -- add 120s
     else
       GM:Chat(Color(255,0,0), "The game can't start because the minimum is 2 players.")
       GM:AddCountdown(30) -- add 30s

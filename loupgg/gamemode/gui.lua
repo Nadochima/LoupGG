@@ -173,7 +173,9 @@ else -- CLIENT
       cb:AddChoice(choices[i][2])
     end
 
-    cb:ChooseOptionID(1)
+    if #choices > 0 then
+      cb:ChooseOptionID(1)
+    end
 
     frame:SetTitle(title)
     frame:SetVisible(true)
