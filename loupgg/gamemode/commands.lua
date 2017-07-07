@@ -78,3 +78,16 @@ GM:RegisterCommand("countdown", true, "seconds", function(ply, args)
 
   return false
 end)
+
+GM:RegisterCommand("test", true, "", function(ply, args)
+  local choices = {}
+  for i=1,5 do
+    table.insert(choices,{"id_"..i, "#"..i})
+  end
+
+  GM:RequestChoice(ply, "Test select", choices, function(ply, idchoice)
+    GM:PlayerChat(ply, "You choose ["..idchoice.."].")
+  end)
+
+  return true
+end)

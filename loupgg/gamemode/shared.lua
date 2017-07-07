@@ -1,3 +1,5 @@
+include("gui.lua")
+
 local GM = GM
 DeriveGamemode("sandbox")
 

@@ -2,6 +2,7 @@ AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
 AddCSLuaFile("fonts.lua")
 AddCSLuaFile("commands.lua")
+AddCSLuaFile("gui.lua")
 
 local GM = GM
 
