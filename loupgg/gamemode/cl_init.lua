@@ -31,7 +31,4 @@ end)
 function GM:OnCountdown()
 end
 
--- display
-function GM:HUDPaint()
-  draw.DrawText(GM.game.countdown, "LoupGG_countdown", 5, 5, Color(255,255,255))
-end
+

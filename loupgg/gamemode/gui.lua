@@ -3,12 +3,14 @@ local GM = GM
 
 if SERVER then
   util.AddNetworkString("gm_request_choice")
+  util.AddNetworkString("gm_player_tag")
 
   local ch_requests = {}  -- per id 64 requests
 
   -- API
 
   -- ask for a unique choice (client-side)
+  --- ply: a player
   --- title: window title
   --- choices: a list of {idstr,valuestr}
   --- callback(ply, idstr)
@@ -26,6 +28,23 @@ if SERVER then
         net.WriteString(ch[1])
         net.WriteString(ch[2])
       end
+    net.Send(ply)
+  end
+
+  -- set tag 
+  --- ply: player or table of players
+  --- steamid64: steam id 64 of the tag target 
+  --- tag: tag name
+  --- rank: negative value make the tag invisible, high value make the tag on top
+  --- color: tag color
+  --- value: tag text
+  function GM:SetTag(ply, steamid64, tag, rank, color, value)
+    net.Start("gm_player_tag")
+      net.WriteString(steamid64)
+      net.WriteString(tag)
+      net.WriteColor(color)
+      net.WriteInt(rank,32)
+      net.WriteString(value)
     net.Send(ply)
   end
 
@@ -80,6 +99,66 @@ else -- CLIENT
     frame:Close()
   end
 
+  -- player tags
+  local player_tags = {}
+  local sorted_player_tags = {}
+
+  local function sort_ptag(a,b)
+    return not (a[3] < b[3])
+  end
+
+  -- DISPLAY
+
+  function GM:HUDPaint()
+    -- countdown
+    draw.DrawText(GM.game.countdown, "LoupGG_countdown", 5, 5, Color(255,255,255))
+
+    -- check tags update
+    for k,v in pairs(player_tags) do
+      local tags = sorted_player_tags[k]
+      if not tags then -- missing tags, update
+        tags = {}
+        sorted_player_tags[k] = tags
+
+        -- sort player tags
+        --- insert
+        for l,w in pairs(v) do
+          if w[1] >= 0 then -- check rank positive
+            table.insert(tags, {w[2],w[3],w[1]})
+          end
+        end
+
+        --- sort
+        table.sort(tags,sort_ptag)
+      end
+    end
+
+    -- display player tags
+    surface.SetFont("LoupGG_tag")
+    local font_height = draw.GetFontHeight("LoupGG_tag")
+    for k,v in pairs(sorted_player_tags) do
+      local p = player.GetBySteamID64(k)
+      local lp = LocalPlayer()
+      if IsValid(p) then
+        local pos = p:EyePos()+Vector(0,0,7)
+        local dist = lp:GetPos():Distance(pos)
+        if dist <= 40*30 then
+          local spos = pos:ToScreen()
+
+          local shift = -font_height*#v
+          for l,w in pairs(v) do 
+            -- display tag ({color, value})
+            surface.SetTextColor(w[1])
+            local width,height = surface.GetTextSize(w[2])
+            surface.SetTextPos(spos.x-width/2, spos.y+shift)
+            surface.DrawText(w[2])
+            shift = shift+height+2
+          end
+        end
+      end
+    end
+  end
+
   -- API
 
   -- ask for a unique choice (client-side)
@@ -101,7 +180,8 @@ else -- CLIENT
     frame:MakePopup()
   end
 
-  -- net events
+  -- NET EVENTS
+
   net.Receive("gm_request_choice", function(len)
     local title = net.ReadString()
     local size = net.ReadInt(32)
@@ -115,5 +195,27 @@ else -- CLIENT
         net.WriteString(choice)
       net.SendToServer()
     end)
+  end)
+
+  -- tag modification
+  net.Receive("gm_player_tag", function(len)
+    local id64 = net.ReadString()
+    local tagname = net.ReadString()
+    local color = net.ReadColor()
+    local rank = net.ReadInt(32)
+    local v = net.ReadString()
+
+    -- get player entry
+    local p = player_tags[id64]
+    if not p then 
+      p = {}
+      player_tags[id64] = p
+    end
+
+    -- set tag
+    p[tagname] = {rank, color, v}
+
+    -- delete sorted_player_tags entry to regenerate
+    sorted_player_tags[id64] = nil
   end)
 end

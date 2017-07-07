@@ -89,5 +89,8 @@ GM:RegisterCommand("test", true, "", function(ply, args)
     GM:PlayerChat(ply, "You choose ["..idchoice.."].")
   end)
 
+  GM:SetTag(ply, ply:SteamID64(), "name", 1000, Color(255,255,255), ply:Nick())
+  GM:SetTag(ply, ply:SteamID64(), "vote", 0, Color(255,0,0), "Vote "..math.random(1,100))
+
   return true
 end)
