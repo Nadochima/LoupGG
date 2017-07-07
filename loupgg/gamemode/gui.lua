@@ -32,7 +32,7 @@ if SERVER then
   end
 
   -- set tag 
-  --- ply: player or table of players
+  --- ply: player or table of players, or nil for everyone
   --- steamid64: steam id 64 of the tag target 
   --- tag: tag name
   --- rank: negative value make the tag invisible, high value make the tag on top
@@ -45,7 +45,12 @@ if SERVER then
       net.WriteColor(color)
       net.WriteInt(rank,32)
       net.WriteString(value)
-    net.Send(ply)
+    
+    if ply == nil then
+      net.Broadcast()
+    else
+      net.Send(ply)
+    end
   end
 
   -- net events
@@ -129,7 +134,7 @@ else -- CLIENT
         end
 
         --- sort
-        table.sort(tags,sort_ptag)
+        table.sort(tags, sort_ptag)
       end
     end
 
@@ -152,7 +157,7 @@ else -- CLIENT
             local width,height = surface.GetTextSize(w[2])
             surface.SetTextPos(spos.x-width/2, spos.y+shift)
             surface.DrawText(w[2])
-            shift = shift+height+2
+            shift = shift+height+1
           end
         end
       end

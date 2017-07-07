@@ -85,27 +85,67 @@ function GM:GetVillagerSeats()
   return r
 end
 
-function GM:SetTeam(ply, team)
-  ply:SetTeam(team)
+function GM:SetTeam(ply, teamid)
+  ply:SetTeam(teamid)
 
   if nteam == TEAM.VILLAGER then
     GM:PlayerChat(ply, Color(0,255,0), "You are a villager.")
   elseif nteam == TEAM.WEREWOLF then
     GM:PlayerChat(ply, Color(255,0,0), "You are a werewolf.")
   end
+
+  -- display role tag for the player
+  GM:SetTag(ply, ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
+end
+
+function GM:CountVotes(steamid64)
+  local count = 0
+  for k,v in pairs(GM.game.players) do
+    if v.vote == steamid64 then
+      count = count+1
+    end
+  end
+
+  return count
+end
+
+-- return nil if no one valid voted once, or the steamid64
+function GM:GetMostVoted()
+  local voted = {}
+  local max = 0
+  local kmax = ""
+  for k,v in pairs(GM.game.players) do
+    if voted[v.vote] == nil then
+      voted[v.vote] = 1
+    else
+      voted[v.vote] = voted[v.vote]+1
+    end
+
+    local count = voted[v.vote]
+    if count > max then
+      max = count
+      kmax = v.vote 
+    end
+  end
+
+  -- check validity
+  if not player.GetBySteamID64(kmax) then
+    kmax = nil
+  end
+
+  return kmax
 end
 
 -- events
 
+-- when the timer reach 0, go to next phase
 function GM:DoNextPhase()
   local phase = GM.game.phase
   if phase == PHASE.LOBBY then
     local pcount = table.Count(GM.game.players)
-    local seats = GM:GetVillagerSeats()
-    if pcount >= 1 and #seats >= pcount then
+    if pcount >= 1 then
       GM:Chat(Color(0,255,0), "Begin game, "..pcount.." players registered.")
 
-      local seat_count = 1
       -- give roles to players
       for k,v in pairs(GM.game.players) do
         local p = player.GetBySteamID64(k)
@@ -116,10 +156,14 @@ function GM:DoNextPhase()
             GM:SetTeam(p, TEAM.VILLAGER)
           end
 
-          p:SetAllowWeaponsInVehicle(true)
-          p:EnterVehicle(seats[seat_count])
-          seat_count = seat_count+1
+          GM:SetTag(nil, k, "pseudo", 1000, Color(255,255,255), p:Nick())
         end
+      end
+
+      -- remove player weapons
+      local players = player.GetAll()
+      for k,v in pairs(players) do
+        v:StripWeapons()
       end
 
       GM:SetPhase(PHASE.DAY_VOTE)
@@ -137,7 +181,7 @@ end
 function GM:ShowTeam(ply)
   local id64 = ply:SteamID64()
   if GM.game.phase == PHASE.LOBBY and not GM.game.players[id64] then
-    GM.game.players[id64] = true
+    GM.game.players[id64] = {}
     GM:Chat(ply:Nick().." registered for the next game.")
   end
 end
@@ -166,19 +210,48 @@ function GM:PlayerInitialSpawn(ply)
   end
 end
 
+-- when the phase change
 function GM:OnPhaseChange(pphase,nphase)
-  if nphase == PHASE.LOBBY then
+  -- END
+  if pphase == PHASE.DAY_VOTE then -- end of day
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
       if p then
+        p:StripWeapon("lgg_vote")
+        GM:SetTag(nil, k, "votes", -1, Color(255,0,0), "")
+        GM:SetTag(nil, k, "votefor", -1, Color(255,0,0), "")
         p:ExitVehicle()
+
+        local id64 = GM:GetMostVoted()
+        if id64 then
+          local vp = player.GetBySteamID64(id64)
+          GM:Chat(vp:Nick().." has been sentenced to death.")
+        end
       end
     end
+  end
 
+  -- BEGIN
+  if nphase == PHASE.LOBBY then
     GM.game.players = {}
     GM:Chat("You can join the next game by pressing F2.")
   elseif nphase == PHASE.DAY_VOTE then 
+    local seats = GM:GetVillagerSeats()
+    local seat_count = 1
+
     GM:Chat(Color(255,255,0), "The sun is rising on the village.")
+    for k,v in pairs(GM.game.players) do
+      local p = player.GetBySteamID64(k)
+      if p then
+        p:SetAllowWeaponsInVehicle(true)
+        p:EnterVehicle(seats[seat_count])
+        seat_count = seat_count+1
+
+        p:Give("lgg_vote")
+        v.vote = "nobody"
+        GM:SetTag(nil, k, "votes", 500, Color(255,0,0), "0 votes")
+      end
+    end
   end
 end
 
