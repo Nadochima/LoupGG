@@ -88,13 +88,7 @@ end
 function GM:SetTeam(ply, teamid)
   ply:SetTeam(teamid)
 
-  if nteam == TEAM.VILLAGER then
-    GM:PlayerChat(ply, Color(0,255,0), "You are a villager.")
-  elseif nteam == TEAM.WEREWOLF then
-    GM:PlayerChat(ply, Color(255,0,0), "You are a werewolf.")
-  elseif nteam == TEAM.DEAD then
-    GM:PlayerChat(ply, Color(125,0,0), "You are dead.")
-  end
+  GM:PlayerChat(ply, team.GetColor(teamid), "You are "..team.GetName(teamid)..".")
 
   -- display role tag for the player
   GM:SetTag(ply, ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
@@ -117,6 +111,7 @@ function GM:GenerateDeck(n)
 
   deck[TEAM.WEREWOLF] = add(math.ceil(n*0.25))
   deck[TEAM.SORCERER] = add(1)
+  deck[TEAM.SEER] = add(1)
   deck[TEAM.SAVIOR] = add(1)
   deck[TEAM.VILLAGER] = add(r) -- add the rest as villagers
 
@@ -367,6 +362,21 @@ function GM:OnPhaseChange(pphase,nphase)
       GM.game.players[id64].vote = nil
     end
   elseif pphase == PHASE.NIGHT_POSTVOTE then
+    -- remove sorcerer stuff
+    local sorcerers = team.GetPlayers(TEAM.SORCERER)
+    if #sorcerers >= 1 then
+      local sorcerer = sorcerers[1]
+      sorcerer:StripWeapon("lgg_life_potion")
+      sorcerer:StripWeapon("lgg_death_potion")
+    end
+
+    -- remove seer stuff
+    local seers = team.GetPlayers(TEAM.SEER)
+    if #seers >= 1 then
+      local seer = seers[1]
+      seer:StripWeapon("lgg_seer_eye")
+    end
+
     -- trigger deaths
     if GM.game.night_vote then GM:TriggerDeath(GM.game.night_vote) end
     if GM.game.sorcerer_vote then GM:TriggerDeath(GM.game.sorcerer_vote) end
@@ -442,9 +452,8 @@ function GM:OnPhaseChange(pphase,nphase)
   elseif nphase == PHASE.NIGHT_POSTVOTE then -- NIGHT POST/SAVE VOTE
     GM:Chat(Color(100,0,50), "The night is even darker, some villagers are waking up...")
 
-    GM.game.sorcerer_vote = nil
-
     -- give sorcerer potions
+    GM.game.sorcerer_vote = nil
     local sorcerers = team.GetPlayers(TEAM.SORCERER)
     if #sorcerers >= 1 then
       local sorcerer = sorcerers[1]
@@ -452,6 +461,17 @@ function GM:OnPhaseChange(pphase,nphase)
       if gp then
         if not gp.life_potion_used then sorcerer:Give("lgg_life_potion") end
         if not gp.death_potion_used then sorcerer:Give("lgg_death_potion") end
+      end
+    end
+
+    -- give seer ability
+    local seers = team.GetPlayers(TEAM.SEER)
+    if #seers >= 1 then
+      local seer = seers[1]
+      local gp = GM.game.players[seer:SteamID64()]
+      if gp then
+        seer:Give("lgg_seer_eye")
+        gp.seer_ability_used = false
       end
     end
   end

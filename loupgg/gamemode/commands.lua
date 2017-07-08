@@ -94,3 +94,26 @@ GM:RegisterCommand("test", true, "", function(ply, args)
 
   return true
 end)
+
+GM:RegisterCommand("setrole", true, "nick role", function(ply, args)
+  if #args >= 4 then
+    -- search team
+    local teamid = TEAM[string.upper(args[4])] or TEAM.NONE
+
+    -- search player
+    for k,v in pairs(GM.game.players) do
+      local p = player.GetBySteamID64(k)
+      if p and string.find(string.upper(p:Nick()), string.upper(args[3])) then
+        GM:SetTeam(p,teamid)
+        GM:PlayerChat(ply, p:Nick().." role set to ",team.GetColor(teamid), team.GetName(teamid))
+        return true
+      end
+    end
+
+    GM:PlayerChat(ply, "Lobby player not found.")
+
+    return true
+  end
+
+  return false
+end)

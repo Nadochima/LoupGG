@@ -18,7 +18,8 @@ TEAM = {
   WEREWOLF = 2,
   DEAD = 3,
   SORCERER = 4,
-  SAVIOR = 5
+  SAVIOR = 5,
+  SEER = 6
 }
 
 -- init phases
@@ -49,6 +50,7 @@ function GM:CreateTeams()
   team.SetUp(TEAM.DEAD, "Dead", Color(125,0,0))
   team.SetUp(TEAM.SORCERER, "Sorcerer", Color(255,0,125))
   team.SetUp(TEAM.SAVIOR, "Savior", Color(255,255,0))
+  team.SetUp(TEAM.SEER, "Seer", Color(121,33,255))
 end
 
 -- EXTEND SOME GMOD FUNCTIONS, DANGER ZONE
