@@ -99,7 +99,7 @@ function GM:SetTeam(ply, teamid)
 
   -- share role
   if teamid == TEAM.WEREWOLF then
-    GM:SetTag(team.GetPlayers(teamid), ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetColor(teamid))
+    GM:SetTag(team.GetPlayers(teamid), ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
   end
 end
 
