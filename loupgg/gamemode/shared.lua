@@ -14,12 +14,13 @@ end
 -- init teams
 TEAM = {
   NONE = TEAM_UNASSIGNED,
-  VILLAGER = 1,
-  WEREWOLF = 2,
-  DEAD = 3,
-  SORCERER = 4,
-  SAVIOR = 5,
-  SEER = 6
+  SPECTATOR = 1,
+  VILLAGER = 2,
+  WEREWOLF = 3,
+  DEAD = 4,
+  SORCERER = 5,
+  SAVIOR = 6,
+  SEER = 7
 }
 
 -- init phases
@@ -45,6 +46,7 @@ end)
 
 -- events
 function GM:CreateTeams()
+  team.SetUp(TEAM.SPECTATOR, "Spectator", Color(120,120,120))
   team.SetUp(TEAM.VILLAGER, "Villager", Color(0,255,0))
   team.SetUp(TEAM.WEREWOLF, "Werewolf", Color(255,0,0))
   team.SetUp(TEAM.DEAD, "Dead", Color(125,0,0))

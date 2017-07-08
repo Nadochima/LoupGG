@@ -66,9 +66,10 @@ function GM:SetCountdown(v)
 end
 
 function GM:SetPhase(phase)
-  if GM.OnPhaseChange then GM:OnPhaseChange(GM.game.phase, phase) end -- OnPhaseChange event (old,new)
-
+  local pphase = GM.game.phase
   GM.game.phase = phase
+  if GM.OnPhaseChange then GM:OnPhaseChange(pphase, phase) end -- OnPhaseChange event (old,new)
+
   net.Start("gm_phase")
     net.WriteInt(GM.game.phase,32)
   net.Broadcast()
@@ -85,6 +86,17 @@ function GM:GetVillagerSeats()
   return r
 end
 
+function GM:GetHouseSpawns()
+  local r = {}
+  for k,v in pairs(ents.FindByClass("prop_*")) do
+    if v:GetModel() == "models/props_lab/huladoll.mdl" then
+      table.insert(r, v)
+    end
+  end
+
+  return r
+end
+
 function GM:SetTeam(ply, teamid)
   ply:SetTeam(teamid)
 
@@ -92,6 +104,10 @@ function GM:SetTeam(ply, teamid)
 
   -- display role tag for the player
   GM:SetTag(ply, ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
+
+  if teamid == TEAM.SPECTATOR or teamid == TEAM.DEAD then
+    ply:Spectate(OBS_MODE_ROAMING)
+  end
 
   -- share role
   if teamid == TEAM.WEREWOLF or teamid == TEAM.DEAD then
@@ -154,6 +170,13 @@ end
 function GM:TryEndGame()
   local gend,winner = GM:CheckEndOfGame() 
   if gend then
+    for k,v in pairs(GM.game.players) do
+      local p = player.GetBySteamID64(k)
+      if p then
+        p:Kill()
+      end
+    end
+
     GM:Chat(team.GetColor(winner), "The "..team.GetName(winner).." team win !")
     GM:SetPhase(PHASE.LOBBY)
     GM:SetCountdown(30)
@@ -164,8 +187,8 @@ end
 
 function GM:ApplyDeath(ply) -- real dead now
   GM:Chat(Color(50,0,0), ply:Nick().." is dead and was a ", team.GetColor(ply:Team()), team.GetName(ply:Team()))
-  GM:SetTeam(ply, TEAM.DEAD)
   ply:Kill()
+  GM:SetTeam(ply, TEAM.DEAD)
 end
 
 function GM:CountVotes(steamid64)
@@ -185,7 +208,8 @@ function GM:GetMostVoted()
   local max = 0
   local kmax = ""
   for k,v in pairs(GM.game.players) do
-    if GM.game.players[v.vote or "nobody"] then
+    local p = player.GetBySteamID64(k)
+    if p and p:Team() ~= TEAM.DEAD and GM.game.players[v.vote or "nobody"] then
       if voted[v.vote] == nil then
         voted[v.vote] = 1
       else
@@ -223,7 +247,7 @@ end
 -- when the timer reach 0, go to the next phase
 function GM:DoNextPhase()
   local phase = GM.game.phase
-  if phase == PHASE.LOBBY then
+  if phase == PHASE.LOBBY then -- START A GAME
     -- bots auto join (for testing)
     local bots = player.GetBots()
     for k,v in pairs(bots) do
@@ -241,6 +265,9 @@ function GM:DoNextPhase()
         table.insert(roles, k)
       end
 
+      local seats = GM:GetVillagerSeats()
+      local houses = GM:GetHouseSpawns()
+
       for k,v in pairs(GM.game.players) do
         local p = player.GetBySteamID64(k)
         if p then
@@ -254,9 +281,28 @@ function GM:DoNextPhase()
             end
           end
 
-          GM:SetTeam(p, selected_role)
+          GM:SetTag(nil, k, "role", -1, Color(255,255,255), "")
 
+          -- set role
+          GM:SetTeam(p, selected_role)
+          if not p:Alive() then
+            p:Spawn()
+          end
           GM:SetTag(nil, k, "pseudo", 1000, Color(255,255,255), p:Nick())
+
+          -- select permanent seat
+          if #seats > 0 then
+            local i = math.random(1,#seats)
+            v.seat = seats[i]
+            table.remove(seats,i)
+          end
+
+          -- select permanent house
+          if #houses > 0 then
+            local i = math.random(1,#houses)
+            v.house = houses[i]
+            table.remove(houses,i)
+          end
         end
       end
 
@@ -268,6 +314,12 @@ function GM:DoNextPhase()
 
       GM:SetPhase(PHASE.DAY_VOTE)
       GM:AddCountdown(120) -- add 120s
+
+      -- add rest in spectators
+      local specs = team.GetPlayers(TEAM.NONE)
+      for k,v in pairs(specs) do
+        GM:SetTeam(v,TEAM.SPECTATOR)
+      end
     else
       GM:Chat(Color(255,0,0), "The game can't start because the minimum is 4 players.")
       GM:AddCountdown(30) -- add 30s
@@ -289,13 +341,21 @@ end
 function GM:ShowTeam(ply)
   local id64 = ply:SteamID64()
   if GM.game.phase == PHASE.LOBBY and not GM.game.players[id64] then
-    GM.game.players[id64] = {}
-    GM:Chat(ply:Nick().." registered for the next game.")
+    if table.Count(GM.game.players) < 16 then
+      GM.game.players[id64] = {}
+      GM:Chat(ply:Nick().." registered for the next game.")
+    else
+      GM:PlayerChat(ply, Color(255,0,0), "Game full.")
+    end
   end
 end
 
 function GM:CanExitVehicle(ply, veh)
   return false
+end
+
+function GM:CanPlayerEnterVehicle(ply, veh, role)
+  return GM.game.phase == PHASE.DAY_VOTE 
 end
 
 function GM:PlayerInitialSpawn(ply) 
@@ -311,11 +371,26 @@ function GM:PlayerInitialSpawn(ply)
   -- chat info
   GM:Chat(ply:Nick().." connected.")
 
+  GM:SetTeam(ply,TEAM.NONE)
+
   if GM.game.phase == PHASE.LOBBY then
     GM:PlayerChat(ply, "You can join the next game by pressing F2.")
   else
     GM:PlayerChat(ply, "A game is running, you can spectate and wait to join the next game.")
+    GM:SetTeam(ply, TEAM.SPECTATOR)
   end
+end
+
+function GM:PlayerSpawn(ply)
+  self.BaseClass.PlayerSpawn(self,ply)
+  ply:GodEnable() -- god mode
+  if ply:Team() == TEAM.SPECTATOR or ply:Team() == TEAM.DEAD then 
+    ply:Spectate(OBS_MODE_ROAMING)
+  end
+end
+
+function GM:CanPlayerSuicide(ply)
+  return false
 end
 
 -- when the phase change
@@ -329,6 +404,14 @@ function GM:OnPhaseChange(pphase,nphase)
       GM:TriggerDeath(id64) -- kill voted
     end
 
+    local good_alives = {}
+    for k,v in pairs(GM.game.players) do
+      local p = player.GetBySteamID64(k)
+      if p:Team() ~= TEAM.DEAD and p:Team() ~= TEAM.WEREWOLF then
+        table.insert(good_alives, p)
+      end
+    end
+
     -- reset stuff
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
@@ -337,6 +420,20 @@ function GM:OnPhaseChange(pphase,nphase)
         GM:SetTag(nil, k, "votes", -1, Color(255,0,0), "")
         GM:SetTag(nil, k, "votefor", -1, Color(255,0,0), "")
         p:ExitVehicle()
+
+        -- send to house if not werewolf
+        if p:Team() ~= TEAM.WEREWOLF then
+          if IsValid(v.house) then
+            p:SetPos(v.house:GetPos())
+          end
+        else -- if werewolf, change skin
+          v.old_model = p:GetModel()
+          p:SetModel("models/player/zombie_fast.mdl")
+
+          -- change werewolf pseudo tag for all good villagers
+          GM:SetTag(good_alives, k, "pseudo", 1000, Color(255,150,70), team.GetName(TEAM.WEREWOLF))
+        end
+
         v.vote = nil
       end
     end
@@ -388,25 +485,30 @@ function GM:OnPhaseChange(pphase,nphase)
     local players = player.GetAll()
     for k,v in pairs(players) do
       local id64 = v:SteamID64()
-
+      v:UnSpectate() -- unspectate
       GM:SetTeam(v,TEAM.NONE)
+      v:Spawn()
+
       GM:SetTag(nil, id64, "votefor", -1, Color(255,0,0), "")
     end
 
     GM.game.players = {}
     GM:Chat("You can join the next game by pressing F2.")
   elseif nphase == PHASE.DAY_VOTE then -- DAY VOTE
-    local seats = GM:GetVillagerSeats()
-    local seat_count = 1
-
     GM:Chat(Color(255,255,0), "The sun is rising on the village.")
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
       if p and p:Team() ~= TEAM.DEAD then
-        if seat_count <= #seats then
+        if p:Team() == TEAM.WEREWOLF then -- reset werewolves
+          GM:SetTag(nil, k, "pseudo", 1000, Color(255,255,255), p:Nick()) -- show pseudo tag
+          if v.old_model then
+            p:SetModel(v.old_model)
+          end
+        end
+
+        if IsValid(v.seat) then
           p:SetAllowWeaponsInVehicle(true)
-          p:EnterVehicle(seats[seat_count])
-          seat_count = seat_count+1
+          p:EnterVehicle(v.seat)
         end
 
         p:Give("lgg_vote")
@@ -482,20 +584,40 @@ function GM:InitPostEntity() -- load map
   local fname = "loupgg/maps/"..game.GetMap()..".txt"
   if file.Exists(fname,"DATA") then
     local data = util.JSONToTable(file.Read(fname,"DATA"))
-    for k,v in pairs(data) do
+    for k,v in pairs(data.seats) do
       local ent = ents.Create("prop_vehicle_prisoner_pod")
       ent:SetModel("models/nova/airboat_seat.mdl")
       ent:SetKeyValue("vehiclescript", "scripts/vehicles/prisoner_pod.txt")
       ent:SetPos(Vector(v[1],v[2],v[3]))
       ent:SetAngles(Angle(v[4],v[5],v[6]))
+      ent:SetRenderMode(RENDERMODE_TRANSALPHA)
+      ent:SetColor(Color(0,0,0,0))
       ent:Spawn()
       local phy = ent:GetPhysicsObject()
       if phy and phy:IsValid() then
         phy:EnableMotion(false)
       end
+      ent:SetCollisionGroup(COLLISION_GROUP_WORLD)
     end
 
-    print("LoupGG: "..table.Count(data).." seats loaded.")
+    print("LoupGG: "..table.Count(data.seats).." seats loaded.")
+
+    for k,v in pairs(data.houses) do
+      local ent = ents.Create("prop_physics")
+      ent:SetModel("models/props_lab/huladoll.mdl")
+      ent:SetPos(Vector(v[1],v[2],v[3]))
+      ent:SetAngles(Angle(v[4],v[5],v[6]))
+      ent:SetRenderMode(RENDERMODE_TRANSALPHA)
+      ent:SetColor(Color(0,0,0,0))
+      ent:Spawn()
+      local phy = ent:GetPhysicsObject()
+      if phy and phy:IsValid() then
+        phy:EnableMotion(false)
+      end
+      ent:SetCollisionGroup(COLLISION_GROUP_WORLD)
+    end
+
+    print("LoupGG: "..table.Count(data.houses).." houses loaded.")
   end
 end
 

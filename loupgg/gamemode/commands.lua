@@ -55,16 +55,25 @@ end
 -- COMMANDS
 
 GM:RegisterCommand("savemap", true, "", function(ply, args)
-  -- save village seats
+  -- save village seats/houses
   local data = {}
-  for k,v in pairs(ents.FindByClass("prop_vehicle_prisoner_pod")) do
+
+  data.seats = {}
+  for k,v in pairs(GM:GetVillagerSeats()) do
     local pos = v:GetPos()
     local rot = v:GetAngles()
-    table.insert(data,{pos.x,pos.y,pos.z,rot.p,rot.y,rot.r})
+    table.insert(data.seats,{pos.x,pos.y,pos.z,rot.p,rot.y,rot.r})
+  end
+
+  data.houses = {}
+  for k,v in pairs(GM:GetHouseSpawns()) do
+    local pos = v:GetPos()
+    local rot = v:GetAngles()
+    table.insert(data.houses,{pos.x,pos.y,pos.z,rot.p,rot.y,rot.r})
   end
 
   file.Write("loupgg/maps/"..game.GetMap()..".txt", util.TableToJSON(data))
-  GM:PlayerChat(ply, "LoupGG map "..game.GetMap().." generated.")
+  GM:PlayerChat(ply, "LoupGG map "..game.GetMap().." generated ("..#data.seats.." seats, "..#data.houses.." houses).")
 
   return true
 end)
@@ -78,6 +87,20 @@ GM:RegisterCommand("countdown", true, "seconds", function(ply, args)
 
   return false
 end)
+
+GM:RegisterCommand("stop", true, "", function(ply, args)
+  for k,v in pairs(GM.game.players) do
+    local p = player.GetBySteamID64(k)
+    if p and p:Team() ~= TEAM.DEAD then
+      GM:ApplyDeath(p)
+    end
+  end
+
+  GM:SetCountdown(0)
+
+  return true
+end)
+
 
 GM:RegisterCommand("test", true, "", function(ply, args)
   local choices = {}
@@ -113,6 +136,38 @@ GM:RegisterCommand("setrole", true, "nick role", function(ply, args)
     GM:PlayerChat(ply, "Lobby player not found.")
 
     return true
+  end
+
+  return false
+end)
+
+GM:RegisterCommand("map", true, "show|hide", function(ply, args)
+  if #args >= 3 then
+    if args[3] == "show" then
+      local seats = GM:GetVillagerSeats()
+      for k,v in pairs(seats) do
+        v:SetColor(Color(255,255,255,255))
+      end
+
+      local houses = GM:GetHouseSpawns()
+      for k,v in pairs(houses) do
+        v:SetColor(Color(255,255,255,255))
+      end
+
+      return true
+    elseif args[3] == "hide" then
+      local seats = GM:GetVillagerSeats()
+      for k,v in pairs(seats) do
+        v:SetColor(Color(0,0,0,0))
+      end
+
+      local houses = GM:GetHouseSpawns()
+      for k,v in pairs(houses) do
+        v:SetColor(Color(0,0,0,0))
+      end
+
+      return true
+    end
   end
 
   return false

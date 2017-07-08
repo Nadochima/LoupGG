@@ -147,7 +147,7 @@ else -- CLIENT
       if IsValid(p) then
         local pos = p:EyePos()+Vector(0,0,7)
         local dist = lp:GetPos():Distance(pos)
-        if dist <= 40*30 then
+        if dist <= 40*12 then -- one meter is ~=40 inch
           local spos = pos:ToScreen()
 
           local shift = -font_height*#v
