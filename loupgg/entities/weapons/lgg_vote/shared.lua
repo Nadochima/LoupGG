@@ -58,7 +58,7 @@ function SWEP:PrimaryAttack()
       }
       for k,v in pairs(LoupGG.game.players) do
         local p = player.GetBySteamID64(k)
-        if p then
+        if p and p:Team() ~= TEAM.DEAD then
           table.insert(choices,{k,p:Nick()})
         end
       end
@@ -100,7 +100,7 @@ function SWEP:PrimaryAttack()
 
       for k,v in pairs(LoupGG.game.players) do
         local p = player.GetBySteamID64(k)
-        if p and p:Team() ~= TEAM.WEREWOLF then
+        if p and p:Team() ~= TEAM.WEREWOLF and p:Team() ~= TEAM.DEAD then
           table.insert(choices,{k,p:Nick()})
         end
       end

@@ -15,7 +15,8 @@ end
 TEAM = {
   NONE = TEAM_UNASSIGNED,
   VILLAGER = 1,
-  WEREWOLF = 2
+  WEREWOLF = 2,
+  DEAD = 3
 }
 
 -- init phases
@@ -42,4 +43,5 @@ end)
 function GM:CreateTeams()
   team.SetUp(TEAM.VILLAGER, "Villager", Color(0,255,0))
   team.SetUp(TEAM.WEREWOLF, "Werewolf", Color(255,0,0))
+  team.SetUp(TEAM.DEAD, "Dead", Color(125,0,0))
 end

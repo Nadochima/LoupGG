@@ -92,15 +92,67 @@ function GM:SetTeam(ply, teamid)
     GM:PlayerChat(ply, Color(0,255,0), "You are a villager.")
   elseif nteam == TEAM.WEREWOLF then
     GM:PlayerChat(ply, Color(255,0,0), "You are a werewolf.")
+  elseif nteam == TEAM.DEAD then
+    GM:PlayerChat(ply, Color(125,0,0), "You are dead.")
   end
 
   -- display role tag for the player
   GM:SetTag(ply, ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
 
   -- share role
-  if teamid == TEAM.WEREWOLF then
+  if teamid == TEAM.WEREWOLF or teamid == TEAM.DEAD then
     GM:SetTag(team.GetPlayers(teamid), ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
   end
+end
+
+function GM:TriggerDeath(steamid64) -- trigger the special death effects for the role
+  local p = player.GetBySteamID64(steamid64)
+  if GM.game.players[steamid64] and p then
+    GM:ApplyDeath(p)
+  end
+end
+
+-- return true,winner_team if the game must end or false
+function GM:CheckEndOfGame()
+  if GM.game.phase ~= PHASE.LOBBY then
+    -- no more werewolves
+    local werewolves = 0
+    local good_alives = 0
+    local players = 0
+
+    for k,v in pairs(GM.game.players) do
+      local p = player.GetBySteamID64(k)
+      if p then
+        if p:Team() == TEAM.WEREWOLF then werewolves = werewolves+1 
+        else good_alives = good_alives+1 end
+
+        players = players+1
+      end
+    end
+
+    if werewolves == 0 then return true,TEAM.VILLAGER end
+    if good_alives < 2 then return true,TEAM.WEREWOLF end
+  end
+
+  return false
+end
+
+-- end the game if it must
+function GM:TryEndGame()
+  local gend,winner = GM:CheckEndOfGame() 
+  if gend then
+    GM:Chat(team.GetColor(winner), "The "..team.GetName(winner).." team win !")
+    GM:SetPhase(PHASE.LOBBY)
+    GM:SetCountdown(30)
+  end
+
+  return gend
+end
+
+function GM:ApplyDeath(ply) -- real dead now
+  GM:SetTeam(ply, TEAM.DEAD)
+  GM:Chat(ply:Nick().." is dead.")
+  ply:Kill()
 end
 
 function GM:CountVotes(steamid64)
@@ -191,9 +243,11 @@ function GM:DoNextPhase()
     GM:SetPhase(PHASE.NIGHT_VOTE)
     GM:AddCountdown(60)
   elseif phase == PHASE.NIGHT_VOTE then
-    GM:SetPhase(PHASE.LOBBY)
-    GM:AddCountdown(30)
+    GM:SetPhase(PHASE.DAY_VOTE)
+    GM:AddCountdown(120)
   end
+
+  GM:TryEndGame()
 end
 
 function GM:ShowTeam(ply)
@@ -236,18 +290,18 @@ function GM:OnPhaseChange(pphase,nphase)
     local id64 = GM:GetMostVoted()
     if id64 then
       local vp = player.GetBySteamID64(id64)
-      GM:Chat(vp:Nick().." has been sentenced to death.")
+      GM:TriggerDeath(id64)
     end
 
     -- reset stuff
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
-      if p then
+      if p and p:Team() ~= TEAM.DEAD then
         p:StripWeapon("lgg_vote")
         GM:SetTag(nil, k, "votes", -1, Color(255,0,0), "")
         GM:SetTag(nil, k, "votefor", -1, Color(255,0,0), "")
         p:ExitVehicle()
-        p.vote = nil
+        v.vote = nil
       end
     end
   elseif pphase == PHASE.NIGHT_VOTE then -- end of day
@@ -255,7 +309,7 @@ function GM:OnPhaseChange(pphase,nphase)
     local id64 = GM:GetMostVoted()
     if id64 then
       local vp = player.GetBySteamID64(id64)
-      GM:Chat(vp:Nick().." has been sentenced to death.")
+      GM:TriggerDeath(id64)
     end
 
     -- reset stuff
@@ -273,7 +327,10 @@ function GM:OnPhaseChange(pphase,nphase)
     -- reset teams
     local players = player.GetAll()
     for k,v in pairs(players) do
+      local id64 = v:SteamID64()
+
       GM:SetTeam(v,TEAM.NONE)
+      GM:SetTag(nil, id64, "votefor", -1, Color(255,0,0), "")
     end
 
     GM.game.players = {}
@@ -285,7 +342,7 @@ function GM:OnPhaseChange(pphase,nphase)
     GM:Chat(Color(255,255,0), "The sun is rising on the village.")
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
-      if p then
+      if p and p:Team() ~= TEAM.DEAD then
         p:SetAllowWeaponsInVehicle(true)
         p:EnterVehicle(seats[seat_count])
         seat_count = seat_count+1
