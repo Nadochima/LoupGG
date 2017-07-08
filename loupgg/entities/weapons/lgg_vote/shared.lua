@@ -52,7 +52,7 @@ function SWEP:PrimaryAttack()
   self:SetNextPrimaryFire(CurTime() + 0.1)
   if SERVER then -- do vote
     local p = self:GetOwner()
-    if LoupGG.game.phase == PHASE.DAY_VOTE then
+    if LoupGG.game.phase == PHASE.DAY_VOTE then -- DAY VOTE
       local choices = {
         {"nobody","nobody"}
       }
@@ -88,6 +88,38 @@ function SWEP:PrimaryAttack()
           -- update vote for previous target
           if LoupGG.game.players[old_vote or "nobody"] then
             LoupGG:SetTag(nil, old_vote, "votes", 500, Color(255,0,0), LoupGG:CountVotes(old_vote).." votes")
+          end
+        end
+      end)
+    elseif LoupGG.game.phase == PHASE.NIGHT_VOTE then -- NIGHT VOTE
+      local werewolves = team.GetPlayers(TEAM.WEREWOLF)
+
+      local choices = {
+        {"nobody","nobody"}
+      }
+
+      for k,v in pairs(LoupGG.game.players) do
+        local p = player.GetBySteamID64(k)
+        if p and p:Team() ~= TEAM.WEREWOLF then
+          table.insert(choices,{k,p:Nick()})
+        end
+      end
+
+      LoupGG:RequestChoice(self:GetOwner(), "Vote", choices, function(ply, choice)
+        local p = player.GetBySteamID64(choice)
+        local id64 = ply:SteamID64()
+        local gp = LoupGG.game.players[id64]
+        if gp.vote ~= choice then
+          local old_vote = gp.vote
+
+          if LoupGG.game.players[choice] then
+            -- info
+            LoupGG:SetTag(werewolves, id64, "votefor", 499, Color(255,0,0), "-> "..p:Nick())
+
+            gp.vote = choice
+          else
+            gp.vote = "nobody"
+            LoupGG:SetTag(werewolves, id64, "votefor", -1, Color(255,0,0), "")
           end
         end
       end)

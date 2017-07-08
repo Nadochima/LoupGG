@@ -96,6 +96,11 @@ function GM:SetTeam(ply, teamid)
 
   -- display role tag for the player
   GM:SetTag(ply, ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
+
+  -- share role
+  if teamid == TEAM.WEREWOLF then
+    GM:SetTag(team.GetPlayers(teamid), ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetColor(teamid))
+  end
 end
 
 function GM:CountVotes(steamid64)
@@ -133,12 +138,22 @@ function GM:GetMostVoted()
     kmax = nil
   end
 
+  -- check equality
+  if kmax then
+    for k,v in pairs(voted) do
+      if v == max and k ~= kmax then
+        kmax = nil
+        break
+      end
+    end
+  end
+
   return kmax
 end
 
 -- events
 
--- when the timer reach 0, go to next phase
+-- when the timer reach 0, go to the next phase
 function GM:DoNextPhase()
   local phase = GM.game.phase
   if phase == PHASE.LOBBY then
@@ -173,8 +188,11 @@ function GM:DoNextPhase()
       GM:AddCountdown(30) -- add 30s
     end
   elseif phase == PHASE.DAY_VOTE then
+    GM:SetPhase(PHASE.NIGHT_VOTE)
+    GM:AddCountdown(60)
+  elseif phase == PHASE.NIGHT_VOTE then
     GM:SetPhase(PHASE.LOBBY)
-    GM:AddCountdown(30) -- add 30s
+    GM:AddCountdown(30)
   end
 end
 
@@ -214,6 +232,14 @@ end
 function GM:OnPhaseChange(pphase,nphase)
   -- END
   if pphase == PHASE.DAY_VOTE then -- end of day
+    -- count votes
+    local id64 = GM:GetMostVoted()
+    if id64 then
+      local vp = player.GetBySteamID64(id64)
+      GM:Chat(vp:Nick().." has been sentenced to death.")
+    end
+
+    -- reset stuff
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
       if p then
@@ -221,21 +247,38 @@ function GM:OnPhaseChange(pphase,nphase)
         GM:SetTag(nil, k, "votes", -1, Color(255,0,0), "")
         GM:SetTag(nil, k, "votefor", -1, Color(255,0,0), "")
         p:ExitVehicle()
-
-        local id64 = GM:GetMostVoted()
-        if id64 then
-          local vp = player.GetBySteamID64(id64)
-          GM:Chat(vp:Nick().." has been sentenced to death.")
-        end
+        p.vote = nil
       end
+    end
+  elseif pphase == PHASE.NIGHT_VOTE then -- end of day
+    -- count votes
+    local id64 = GM:GetMostVoted()
+    if id64 then
+      local vp = player.GetBySteamID64(id64)
+      GM:Chat(vp:Nick().." has been sentenced to death.")
+    end
+
+    -- reset stuff
+    local werewolves = team.GetPlayers(TEAM.WEREWOLF)
+    for k,v in pairs(werewolves) do
+      local id64 = v:SteamID64()
+      v:StripWeapon("lgg_vote")
+      GM:SetTag(nil, id64, "votefor", -1, Color(255,0,0), "")
+      GM.game.players[id64].vote = nil
     end
   end
 
   -- BEGIN
-  if nphase == PHASE.LOBBY then
+  if nphase == PHASE.LOBBY then -- LOBBY
+    -- reset teams
+    local players = player.GetAll()
+    for k,v in pairs(players) do
+      GM:SetTeam(v,TEAM.NONE)
+    end
+
     GM.game.players = {}
     GM:Chat("You can join the next game by pressing F2.")
-  elseif nphase == PHASE.DAY_VOTE then 
+  elseif nphase == PHASE.DAY_VOTE then -- DAY VOTE
     local seats = GM:GetVillagerSeats()
     local seat_count = 1
 
@@ -251,6 +294,15 @@ function GM:OnPhaseChange(pphase,nphase)
         v.vote = "nobody"
         GM:SetTag(nil, k, "votes", 500, Color(255,0,0), "0 votes")
       end
+    end
+  elseif nphase == PHASE.NIGHT_VOTE then -- NIGHT VOTE
+    GM:Chat(Color(150,0,0), "The night is falling on the village.")
+
+    local werewolves = team.GetPlayers(TEAM.WEREWOLF)
+
+    for k,v in pairs(werewolves) do
+      v:Give("lgg_vote")
+      GM.game.players[v:SteamID64()].vote = "nobody"
     end
   end
 end

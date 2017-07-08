@@ -21,7 +21,8 @@ TEAM = {
 -- init phases
 PHASE = {
   LOBBY = 0, -- waiting for people to register for the next game
-  DAY_VOTE = 1 -- day vote
+  DAY_VOTE = 1, -- day vote
+  NIGHT_VOTE = 2
 }
 
 -- init shared game data
