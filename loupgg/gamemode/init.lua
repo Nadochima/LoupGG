@@ -231,6 +231,8 @@ function GM:CanPerceive(listener, talker, is_voice)
         elseif gpl.lover == talker:SteamID64() and gpt.lover == listener:SteamID64() then return true
         -- sisters
         elseif listener:Team() == TEAM.SISTER and talker:Team() == TEAM.SISTER then return true
+        -- little girl
+        elseif listener:Team() == TEAM.LITTLE_GIRL and talker:Team() == TEAM.WEREWOLF then return true
         end
       -- deads and shaman
       elseif listener:Team() == TEAM.SHAMAN and talker:Team() == TEAM.DEAD or talker:Team() == TEAM.SHAMAN and listener:Team() == TEAM.DEAD then return true
@@ -269,6 +271,7 @@ function GM:GenerateDeck(n)
   deck[TEAM.CUPID] = add(1)
   deck[TEAM.SHAMAN] = add(1)
   deck[TEAM.SAVIOR] = add(1)
+  deck[TEAM.LITTLE_GIRL] = add(1)
   if r >= 2 then
     deck[TEAM.SISTER] = add(2)
   end
@@ -287,6 +290,7 @@ function GM:TriggerDeath(steamid64) -- trigger the special death effects for the
 
       p:Give("weapon_shotgun")
       p:SelectWeapon("weapon_shotgun")
+      p:ExitVehicle()
 
       if GM.game.phase == PHASE.NIGHT_VOTE then -- can't kill in front, ask target
         local choices = {
@@ -301,7 +305,7 @@ function GM:TriggerDeath(steamid64) -- trigger the special death effects for the
 
         GM:RequestChoice(p, "Last stand", choices, function(ply, choice)
           local p = player.GetBySteamID64(choice)
-          if p and p:Team() ~= TEAM.DEAD then -- kill the target
+          if p and p:Team() ~= TEAM.DEAD and ply:Team() == TEAM.HUNTER then -- kill the target
             GM:TriggerDeath(choice)
             GM:ApplyDeath(ply)
           end

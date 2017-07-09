@@ -24,7 +24,8 @@ TEAM = {
   HUNTER = 8,
   CUPID = 9,
   SISTER = 10,
-  SHAMAN = 11
+  SHAMAN = 11,
+  LITTLE_GIRL = 12
 }
 
 -- init phases
@@ -61,6 +62,7 @@ function GM:CreateTeams()
   team.SetUp(TEAM.CUPID, "Cupid", Color(255,0,255))
   team.SetUp(TEAM.SISTER, "Sister", Color(0,135,255))
   team.SetUp(TEAM.SHAMAN, "Shaman", Color(0,240,252))
+  team.SetUp(TEAM.LITTLE_GIRL, "Little girl", Color(244,137,66))
 end
 
 
