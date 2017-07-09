@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 if CLIENT then
-  SWEP.PrintName = "Death Potion"
+  SWEP.PrintName = lang.item.death_potion.title()
   SWEP.Slot = 1
   SWEP.SlotPos = 1
   SWEP.DrawAmmo = false
@@ -9,7 +9,7 @@ if CLIENT then
 end
 
 SWEP.Author = ""
-SWEP.Instructions = "Left click to kill someone\n"
+SWEP.Instructions = lang.item.death_potion.help()
 SWEP.Contact = ""
 SWEP.Purpose = ""
 SWEP.WorldModel = ""
@@ -54,7 +54,7 @@ function SWEP:PrimaryAttack()
     local ply = self:GetOwner()
     if LoupGG.game.phase == PHASE.NIGHT_POSTVOTE then 
       local choices = {
-        {"nobody","nobody"}
+        {"nobody",lang.common.nobody()}
       }
       for k,v in pairs(LoupGG.game.players) do
         local p = player.GetBySteamID64(k)
@@ -63,17 +63,17 @@ function SWEP:PrimaryAttack()
         end
       end
 
-      LoupGG:RequestChoice(ply, "Death Potion", choices, function(ply, choice)
+      LoupGG:RequestChoice(ply, lang.item.death_potion.title(), choices, function(ply, choice)
         local p = player.GetBySteamID64(choice)
         local gp = LoupGG.game.players[ply:SteamID64()]
         if gp and p then -- kill the target
           LoupGG.game.sorcerer_vote = choice
           gp.death_potion_used = true
-          LoupGG:PlayerChat(ply, Color(200,0,50), "You will use your death potion on "..p:Nick()..".")
+          LoupGG:PlayerChat(ply, Color(200,0,50), lang.item.death_potion.use(p:Nick()))
         else
           LoupGG.game.sorcerer_vote = nil 
           gp.death_potion_used = false
-          LoupGG:PlayerChat(ply, Color(200,0,50), "You will not use your death potion.")
+          LoupGG:PlayerChat(ply, Color(200,0,50), lang.item.death_potion.no_use())
         end
       end)
     end

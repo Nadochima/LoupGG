@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 if CLIENT then
-  SWEP.PrintName = "Vote"
+  SWEP.PrintName = lang.item.vote.title()
   SWEP.Slot = 1
   SWEP.SlotPos = 1
   SWEP.DrawAmmo = false
@@ -9,7 +9,7 @@ if CLIENT then
 end
 
 SWEP.Author = ""
-SWEP.Instructions = "Left click to vote\n"
+SWEP.Instructions = lang.item.vote.help()
 SWEP.Contact = ""
 SWEP.Purpose = ""
 SWEP.WorldModel = ""
@@ -54,7 +54,7 @@ function SWEP:PrimaryAttack()
     local p = self:GetOwner()
     if LoupGG.game.phase == PHASE.DAY_VOTE then -- DAY VOTE
       local choices = {
-        {"nobody","nobody"}
+        {"nobody",lang.common.nobody()}
       }
       for k,v in pairs(LoupGG.game.players) do
         local p = player.GetBySteamID64(k)
@@ -63,7 +63,7 @@ function SWEP:PrimaryAttack()
         end
       end
 
-      LoupGG:RequestChoice(self:GetOwner(), "Vote", choices, function(ply, choice)
+      LoupGG:RequestChoice(self:GetOwner(), lang.item.vote.title(), choices, function(ply, choice)
         local p = player.GetBySteamID64(choice)
         local id64 = ply:SteamID64()
         local gp = LoupGG.game.players[id64]
@@ -72,22 +72,22 @@ function SWEP:PrimaryAttack()
 
           if LoupGG.game.players[choice] then
             -- info
-            LoupGG:Chat(Color(255,0,0), ply:Nick().." voted for "..p:Nick()..".")
+            LoupGG:Chat(Color(255,0,0), lang.item.vote.voted(ply:Nick(),p:Nick()))
             LoupGG:SetTag(nil, id64, "votefor", 499, Color(255,0,0), "-> "..p:Nick())
 
             gp.vote = choice
 
             -- update vote for target
-            LoupGG:SetTag(nil, choice, "votes", 500, Color(255,0,0), LoupGG:CountVotes(choice).." votes")
+            LoupGG:SetTag(nil, choice, "votes", 500, Color(255,0,0), lang.common.votes(LoupGG:CountVotes(choice)))
           else
             gp.vote = "nobody"
-            LoupGG:Chat(Color(255,0,0), ply:Nick().." voted for nobody.")
+            LoupGG:Chat(Color(255,0,0), lang.item.vote.voted(ply:Nick(),lang.common.nobody()))
             LoupGG:SetTag(nil, id64, "votefor", -1, Color(255,0,0), "")
           end
 
           -- update vote for previous target
           if LoupGG.game.players[old_vote or "nobody"] then
-            LoupGG:SetTag(nil, old_vote, "votes", 500, Color(255,0,0), LoupGG:CountVotes(old_vote).." votes")
+            LoupGG:SetTag(nil, old_vote, "votes", 500, Color(255,0,0), lang.common.votes(LoupGG:CountVotes(old_vote)))
           end
         end
       end)
@@ -95,7 +95,7 @@ function SWEP:PrimaryAttack()
       local werewolves = team.GetPlayers(TEAM.WEREWOLF)
 
       local choices = {
-        {"nobody","nobody"}
+        {"nobody",lang.common.nobody()}
       }
 
       for k,v in pairs(LoupGG.game.players) do
@@ -105,7 +105,7 @@ function SWEP:PrimaryAttack()
         end
       end
 
-      LoupGG:RequestChoice(self:GetOwner(), "Vote", choices, function(ply, choice)
+      LoupGG:RequestChoice(self:GetOwner(), lang.item.vote.title(), choices, function(ply, choice)
         local p = player.GetBySteamID64(choice)
         local id64 = ply:SteamID64()
         local gp = LoupGG.game.players[id64]

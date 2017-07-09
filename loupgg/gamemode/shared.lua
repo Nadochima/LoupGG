@@ -1,4 +1,16 @@
 include("gui.lua")
+include("lib/lang.lua")
+
+-- load language
+locale = "en"
+if SERVER then
+  AddCSLuaFile("lang/"..locale..".lua")
+end
+include("lang/"..locale..".lua")
+lang = Lang.new(lang or {})
+
+
+-- Gamemode
 
 local GM = GM
 DeriveGamemode("sandbox")
@@ -52,18 +64,18 @@ end)
 
 -- events
 function GM:CreateTeams()
-  team.SetUp(TEAM.SPECTATOR, "Spectator", Color(120,120,120))
-  team.SetUp(TEAM.VILLAGER, "Villager", Color(0,255,0))
-  team.SetUp(TEAM.WEREWOLF, "Werewolf", Color(255,0,0))
-  team.SetUp(TEAM.DEAD, "Dead", Color(125,0,0))
-  team.SetUp(TEAM.SORCERER, "Sorcerer", Color(255,0,125))
-  team.SetUp(TEAM.SAVIOR, "Savior", Color(255,255,0))
-  team.SetUp(TEAM.SEER, "Seer", Color(121,33,255))
-  team.SetUp(TEAM.HUNTER, "Hunter", Color(104,130,0))
-  team.SetUp(TEAM.CUPID, "Cupid", Color(255,0,255))
-  team.SetUp(TEAM.SISTER, "Sister", Color(0,135,255))
-  team.SetUp(TEAM.SHAMAN, "Shaman", Color(0,240,252))
-  team.SetUp(TEAM.LITTLE_GIRL, "Little girl", Color(244,137,66))
+  team.SetUp(TEAM.SPECTATOR, lang.role.spectator(), Color(120,120,120))
+  team.SetUp(TEAM.VILLAGER, lang.role.villager(), Color(0,255,0))
+  team.SetUp(TEAM.WEREWOLF, lang.role.werewolf(), Color(255,0,0))
+  team.SetUp(TEAM.DEAD, lang.role.dead(), Color(125,0,0))
+  team.SetUp(TEAM.SORCERER, lang.role.sorcerer(), Color(255,0,125))
+  team.SetUp(TEAM.SAVIOR, lang.role.savior(), Color(255,255,0))
+  team.SetUp(TEAM.SEER, lang.role.seer(), Color(121,33,255))
+  team.SetUp(TEAM.HUNTER, lang.role.hunter(), Color(104,130,0))
+  team.SetUp(TEAM.CUPID, lang.role.cupid(), Color(255,0,255))
+  team.SetUp(TEAM.SISTER, lang.role.sister(), Color(0,135,255))
+  team.SetUp(TEAM.SHAMAN, lang.role.shaman(), Color(0,240,252))
+  team.SetUp(TEAM.LITTLE_GIRL, lang.role.little_girl(), Color(244,137,66))
 end
 
 

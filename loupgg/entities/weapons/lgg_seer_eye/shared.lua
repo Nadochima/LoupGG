@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 if CLIENT then
-  SWEP.PrintName = "Seer Eye"
+  SWEP.PrintName = lang.item.seer_eye.title()
   SWEP.Slot = 1
   SWEP.SlotPos = 1
   SWEP.DrawAmmo = false
@@ -9,7 +9,7 @@ if CLIENT then
 end
 
 SWEP.Author = ""
-SWEP.Instructions = "Left click to inspect someone\n"
+SWEP.Instructions = lang.item.seer_eye.help()
 SWEP.Contact = ""
 SWEP.Purpose = ""
 SWEP.WorldModel = ""
@@ -57,7 +57,7 @@ function SWEP:PrimaryAttack()
 
     if LoupGG.game.phase == PHASE.NIGHT_POSTVOTE and gp and not gp.seer_ability_used then 
       local choices = {
-        {"nobody","nobody"}
+        {"nobody",lang.common.nobody()}
       }
 
       for k,v in pairs(LoupGG.game.players) do
@@ -67,7 +67,7 @@ function SWEP:PrimaryAttack()
         end
       end
 
-      LoupGG:RequestChoice(ply, "Seer Eye", choices, function(ply, choice)
+      LoupGG:RequestChoice(ply, lang.item.seer_eye.title(), choices, function(ply, choice)
         local p = player.GetBySteamID64(choice)
         if p then -- inspect role
           local teamid = p:Team()
@@ -76,11 +76,11 @@ function SWEP:PrimaryAttack()
           gp.seen[choice] = true
 
           LoupGG:SetTag(ply, choice, "role", 999, team.GetColor(teamid), team.GetName(teamid))
-          LoupGG:Chat(team.GetColor(TEAM.SEER), "The seer has inspected someone, a ", team.GetColor(teamid), team.GetName(teamid))
+          LoupGG:Chat(team.GetColor(TEAM.SEER), lang.item.seer_eye.inspected(), team.GetColor(teamid), team.GetName(teamid))
         end
       end)
     else
-      LoupGG:PlayerChat(ply, "You can't use this item.")
+      LoupGG:PlayerChat(ply, lang.item.cant_use())
     end
   end
 end

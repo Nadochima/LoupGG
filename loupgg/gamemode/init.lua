@@ -3,6 +3,7 @@ AddCSLuaFile("shared.lua")
 AddCSLuaFile("fonts.lua")
 AddCSLuaFile("commands.lua")
 AddCSLuaFile("gui.lua")
+AddCSLuaFile("lib/lang.lua")
 
 local GM = GM
 LoupGG = GM
@@ -114,23 +115,10 @@ function GM:GetHouseSpawns()
 end
 
 function GM:SetTeam(ply, teamid)
-  -- sister check: same house
-  if teamid == TEAM.SISTER then
-    local sisters = team.GetPlayers(TEAM.SISTER)
-    if #sisters >= 1 then
-      local gp = GM.game.players[ply:SteamID64()]
-      local sgp = GM.game.players[sisters[1]:SteamID64()]
-
-      if gp and sgp then
-        gp.house = sgp.house
-      end
-    end
-  end
-
   ply:SetTeam(teamid)
 
   if teamid ~= TEAM.DEAD then
-    GM:PlayerChat(ply, team.GetColor(teamid), "You are "..team.GetName(teamid)..".")
+    GM:PlayerChat(ply, team.GetColor(teamid), lang.common.you_are(team.GetName(teamid)))
   end
 
   -- display role tag for the player
@@ -143,7 +131,7 @@ function GM:SetTeam(ply, teamid)
     local second_lover = nil
 
     local choices = {
-      {"nobody","nobody"}
+      {"nobody",lang.common.nobody()}
     }
 
     for k,v in pairs(GM.game.players) do
@@ -153,11 +141,11 @@ function GM:SetTeam(ply, teamid)
       end
     end
 
-    GM:RequestChoice(ply, "Make couple (1)", choices, function(ply, choice)
+    GM:RequestChoice(ply, lang.cupid.make_couple(1), choices, function(ply, choice)
       first_lover = choice
 
       local choices = {
-        {"nobody","nobody"}
+        {"nobody",lang.common.nobody()}
       }
 
       for k,v in pairs(GM.game.players) do
@@ -167,7 +155,7 @@ function GM:SetTeam(ply, teamid)
         end
       end
 
-      GM:RequestChoice(ply, "Make couple (2)", choices, function(ply, choice)
+      GM:RequestChoice(ply, lang.cupid.make_couple(2), choices, function(ply, choice)
         second_lover = choice
 
         local pkeys = table.GetKeys(GM.game.players)
@@ -196,13 +184,13 @@ function GM:SetTeam(ply, teamid)
         gsp.lover = first_lover
         gsp.house = gfp.house -- same house
 
-        GM:SetTag(fp, second_lover, "lover", 998, team.GetColor(TEAM.CUPID), "Lover")
-        GM:SetTag(sp, first_lover, "lover", 998, team.GetColor(TEAM.CUPID), "Lover")
+        GM:SetTag(fp, second_lover, "lover", 998, team.GetColor(TEAM.CUPID), lang.cupid.lover())
+        GM:SetTag(sp, first_lover, "lover", 998, team.GetColor(TEAM.CUPID), lang.cupid.lover())
 
-        GM:PlayerChat(fp, team.GetColor(TEAM.CUPID), "You are in love with "..sp:Nick()..".")
-        GM:PlayerChat(sp, team.GetColor(TEAM.CUPID), "You are in love with "..fp:Nick()..".")
+        GM:PlayerChat(fp, team.GetColor(TEAM.CUPID), lang.cupid.you_love(sp:Nick()))
+        GM:PlayerChat(sp, team.GetColor(TEAM.CUPID), lang.cupid.you_love(fp:Nick()))
 
-        GM:PlayerChat(ply, team.GetColor(TEAM.CUPID), fp:Nick().." and "..sp:Nick().." are now in love.")
+        GM:PlayerChat(ply, team.GetColor(TEAM.CUPID), lang.cupid.in_love(fp:Nick(), sp:Nick()))
       end)
     end)
   end
@@ -222,41 +210,47 @@ end
 
 -- called to check if a player can hear/read other player voice/chat
 function GM:CanPerceive(listener, talker, is_voice)
-  -- return true to enable hear/read
+  if listener:IsPlayer() and talker:IsPlayer() then -- only if both players
+    -- return true to enable hear/read
 
-  if GM.game.phase == PHASE.LOBBY then
-    return true
-  elseif GM.game.phase == PHASE.DAY_VOTE then -- day vote, alives can talk/hear
-    local gpl = GM.game.players[listener:SteamID64()]
-    local gpt = GM.game.players[talker:SteamID64()]
+    if GM.game.phase == PHASE.LOBBY then
+      return true
+    elseif GM.game.phase == PHASE.DAY_VOTE then -- day vote, alives can talk/hear
+      local gpl = GM.game.players[listener:SteamID64()]
+      local gpt = GM.game.players[talker:SteamID64()]
 
-    -- no chat possible at day vote
-    if gpl and gpt and talker:Team() ~= TEAM.DEAD and is_voice then return true end
-  else -- NIGHT
-    local gpl = GM.game.players[listener:SteamID64()]
-    local gpt = GM.game.players[talker:SteamID64()]
+      -- no chat possible at day vote, only voice chat for the living, everyone can hear
+      if gpl and gpt and talker:Team() ~= TEAM.DEAD and is_voice then return true end
+    else -- NIGHT
+      local gpl = GM.game.players[listener:SteamID64()]
+      local gpt = GM.game.players[talker:SteamID64()]
 
-    if gpl and gpt then -- playing
-      if listener:Team() ~= TEAM.DEAD and talker:Team() ~= TEAM.DEAD then -- alive
-        -- werewolves
-        if listener:Team() == TEAM.WEREWOLF and talker:Team() == TEAM.WEREWOLF then return true
-        -- lovers
-        elseif gpl.lover == talker:SteamID64() and gpt.lover == listener:SteamID64() then return true
-        -- sisters
-        elseif listener:Team() == TEAM.SISTER and talker:Team() == TEAM.SISTER then return true
-        -- little girl
-        elseif listener:Team() == TEAM.LITTLE_GIRL and talker:Team() == TEAM.WEREWOLF then return true
+      if gpl and gpt then -- playing
+        if listener:Team() ~= TEAM.DEAD and talker:Team() ~= TEAM.DEAD then -- alive
+          -- werewolves
+          if listener:Team() == TEAM.WEREWOLF and talker:Team() == TEAM.WEREWOLF then return true
+          -- lovers
+          elseif gpl.lover == talker:SteamID64() and gpt.lover == listener:SteamID64() then return true
+          -- sisters
+          elseif listener:Team() == TEAM.SISTER and talker:Team() == TEAM.SISTER then return true
+          -- little girl
+          elseif listener:Team() == TEAM.LITTLE_GIRL and talker:Team() == TEAM.WEREWOLF then return true
+          end
+        -- deads and shaman
+        elseif (listener:Team() == TEAM.SHAMAN and talker:Team() == TEAM.DEAD) or (talker:Team() == TEAM.SHAMAN and listener:Team() == TEAM.DEAD) then return true
         end
-      -- deads and shaman
-      elseif listener:Team() == TEAM.SHAMAN and talker:Team() == TEAM.DEAD or talker:Team() == TEAM.SHAMAN and listener:Team() == TEAM.DEAD then return true
       end
     end
+
+    -- spectator, everyone and in function of distance for the voice
+    if listener:Team() == TEAM.SPECTATOR then return (listener:GetPos():Distance(talker:GetPos()) <= 40*12) or not is_voice end
+    -- deads can talk to each others
+    if listener:Team() == TEAM.DEAD and talker:Team() == TEAM.DEAD then return true end
+
+    return false
+  else
+    return true
   end
-
-  -- spectator, everyone and in function of distance for the voice
-  if listener:Team() == TEAM.SPECTATOR then return (listener:GetPos():Distance(talker:GetPos()) <= 40*12) or not is_voice end
-
-  return false
 end
 
 function GM:PlayerCanHearPlayersVoice(listener, talker)
@@ -307,7 +301,7 @@ function GM:TriggerDeath(steamid64) -- trigger the special death effects for the
 
       if GM.game.phase == PHASE.NIGHT_VOTE then -- can't kill in front, ask target
         local choices = {
-          {"nobody","nobody"}
+          {"nobody",lang.common.nobody()}
         }
         for k,v in pairs(GM.game.players) do
           local p = player.GetBySteamID64(k)
@@ -316,7 +310,7 @@ function GM:TriggerDeath(steamid64) -- trigger the special death effects for the
           end
         end
 
-        GM:RequestChoice(p, "Last stand", choices, function(ply, choice)
+        GM:RequestChoice(p, lang.hunter.last_stand(), choices, function(ply, choice)
           local p = player.GetBySteamID64(choice)
           if p and p:Team() ~= TEAM.DEAD and ply:Team() == TEAM.HUNTER then -- kill the target
             GM:TriggerDeath(choice)
@@ -340,7 +334,7 @@ function GM:TriggerDeath(steamid64) -- trigger the special death effects for the
       local pl = player.GetBySteamID64(gp.lover)
       if gpl and pl then
         gpl.lover = nil -- prevent recursive call
-        GM:Chat(team.GetColor(TEAM.CUPID), pl:Nick().." can't survive in this world without "..p:Nick()..".")
+        GM:Chat(team.GetColor(TEAM.CUPID), lang.cupid.death(pl:Nick(),p:Nick()))
         GM:TriggerDeath(gp.lover)
       end
     end
@@ -394,7 +388,7 @@ function GM:TryEndGame()
       end
     end
 
-    GM:Chat(team.GetColor(winner), "The "..team.GetName(winner).." team win !")
+    GM:Chat(team.GetColor(winner), lang.common.win(team.GetName(winner)))
     GM:SetPhase(PHASE.LOBBY)
     GM:SetCountdown(30)
   end
@@ -403,9 +397,13 @@ function GM:TryEndGame()
 end
 
 function GM:ApplyDeath(ply) -- real dead now
-  GM:Chat(team.GetColor(ply:Team()), ply:Nick(), Color(255,255,255)," is dead and was a ", team.GetColor(ply:Team()), team.GetName(ply:Team()))
+  GM:Chat(team.GetColor(ply:Team()), ply:Nick(), Color(255,255,255),lang.common.death(), team.GetColor(ply:Team()), team.GetName(ply:Team()))
   ply:Kill()
   GM:SetTeam(ply, TEAM.DEAD)
+
+  if GM:CheckEndOfGame() then -- update game state
+    GM:SetCountdown(0)
+  end
 end
 
 function GM:CountVotes(steamid64)
@@ -502,7 +500,7 @@ function GM:DoNextPhase()
 
     local pcount = table.Count(GM.game.players)
     if pcount >= 4 then
-      GM:Chat(Color(0,255,0), "Begin game, "..pcount.." players registered.")
+      GM:Chat(Color(0,255,0), lang.lobby.begin(pcount))
 
       -- give roles to players
       local deck = GM:GenerateDeck(pcount)
@@ -552,6 +550,20 @@ function GM:DoNextPhase()
         end
       end
 
+      -- merge sister houses
+      local sisters = team.GetPlayers(TEAM.SISTER)
+      local sister_house = nil
+      for k,v in pairs(sisters) do
+        local gp = GM.game.players[v:SteamID64()]
+        if gp then
+          if sister_house then
+            gp.house = sister_house
+          else
+            sister_house = gp.house
+          end
+        end
+      end
+
       -- remove player weapons
       local players = player.GetAll()
       for k,v in pairs(players) do
@@ -566,7 +578,7 @@ function GM:DoNextPhase()
         GM:SetTeam(v,TEAM.SPECTATOR)
       end
     else
-      GM:Chat(Color(255,0,0), "The game can't start because the minimum is 4 players.")
+      GM:Chat(Color(255,0,0), lang.lobby.not_enough(4))
       GM:AddCountdown(30) -- add 30s
     end
   elseif phase == PHASE.DAY_VOTE then
@@ -587,9 +599,9 @@ function GM:ShowTeam(ply)
   if GM.game.phase == PHASE.LOBBY and not GM.game.players[id64] then
     if table.Count(GM.game.players) < 16 then
       GM.game.players[id64] = {}
-      GM:Chat(ply:Nick().." registered for the next game.")
+      GM:Chat(lang.lobby.registered(ply:Nick()))
     else
-      GM:PlayerChat(ply, Color(255,0,0), "Game full.")
+      GM:PlayerChat(ply, Color(255,0,0), lang.lobby.full())
     end
   end
 end
@@ -626,14 +638,14 @@ function GM:PlayerInitialSpawn(ply)
   net.Send(ply)
 
   -- chat info
-  GM:Chat(ply:Nick().." connected.")
+  GM:Chat(lang.common.connected(ply:Nick()))
 
   GM:SetTeam(ply,TEAM.NONE)
 
   if GM.game.phase == PHASE.LOBBY then
-    GM:PlayerChat(ply, "You can join the next game by pressing F2.")
+    GM:PlayerChat(ply, lang.lobby.help())
   else
-    GM:PlayerChat(ply, "A game is running, you can spectate and wait to join the next game.")
+    GM:PlayerChat(ply, lang.lobby.running())
     GM:SetTeam(ply, TEAM.SPECTATOR)
   end
 end
@@ -642,6 +654,11 @@ function GM:PlayerSpawn(ply)
   self.BaseClass.PlayerSpawn(self,ply)
   ply:SetCustomCollisionCheck(true)
   ply:GodEnable() -- god mode
+
+  if not ply:IsSuperAdmin() then
+    ply:StripWeapon("weapon_physgun")
+  end
+
   if ply:Team() == TEAM.SPECTATOR or ply:Team() == TEAM.DEAD then 
     ply:Spectate(OBS_MODE_ROAMING)
   end
@@ -738,7 +755,7 @@ function GM:OnPhaseChange(pphase,nphase)
     end
 
     GM.game.players = {}
-    GM:Chat("You can join the next game by pressing F2.")
+    GM:Chat(lang.lobby.help())
 
     -- reset effects
     GM:ServerConVars({atmos_dnc_settime = "12"})
@@ -755,7 +772,7 @@ function GM:OnPhaseChange(pphase,nphase)
   elseif nphase == PHASE.DAY_VOTE then -- DAY VOTE
     GM:AddCountdown(math.min(10+10*#GM:GetPlayers(true, {-TEAM.DEAD}),120)) -- 10s and 10s per g
 
-    GM:Chat(Color(255,255,0), "The sun is rising on the village.")
+    GM:Chat(Color(255,255,0), lang.msg.day())
     GM:ServerConVars({atmos_dnc_settime = "12"})
     GM:ClientConVars(nil,{
       atmos_dnc_settime = "12",
@@ -790,12 +807,12 @@ function GM:OnPhaseChange(pphase,nphase)
 
         p:Give("lgg_vote")
         v.vote = "nobody"
-        GM:SetTag(nil, k, "votes", 500, Color(255,0,0), "0 votes")
+        GM:SetTag(nil, k, "votes", 500, Color(255,0,0), lang.common.votes(0))
       end
     end
   elseif nphase == PHASE.NIGHT_VOTE then -- NIGHT VOTE
     GM:AddCountdown(math.min(10+10*#GM:GetPlayers(false, {TEAM.WEREWOLF}),40)) -- 10s and 10s per g
-    GM:Chat(Color(150,0,0), "The night is falling on the village.")
+    GM:Chat(Color(150,0,0), lang.msg.night())
     GM:ServerConVars({atmos_dnc_settime = "20"})
     GM:ClientConVars(nil,{
       atmos_dnc_settime = "20",
@@ -846,6 +863,7 @@ function GM:OnPhaseChange(pphase,nphase)
 
     for k,v in pairs(werewolves) do
       v:Give("lgg_vote")
+      GM:PlayerChat(v, lang.werewolf.help_vote())
       GM.game.players[v:SteamID64()].vote = "nobody"
     end
 
@@ -855,7 +873,7 @@ function GM:OnPhaseChange(pphase,nphase)
     if #saviors >= 1 then
       -- ask the savior who he want to protect this night
       local choices = {
-        {"nobody","nobody"}
+        {"nobody",lang.common.nobody()}
       }
       for k,v in pairs(GM.game.players) do
         local p = player.GetBySteamID64(k)
@@ -865,7 +883,7 @@ function GM:OnPhaseChange(pphase,nphase)
       end
 
       GM.game.savior_target = nil
-      GM:RequestChoice(saviors[1], "Protect", choices, function(ply, choice)
+      GM:RequestChoice(saviors[1], lang.savior.protect(), choices, function(ply, choice)
         local p = player.GetBySteamID64(choice)
         if p then
           GM.game.savior_target = p:SteamID64()
@@ -874,7 +892,16 @@ function GM:OnPhaseChange(pphase,nphase)
     end
   elseif nphase == PHASE.NIGHT_POSTVOTE then -- NIGHT POST/SAVE VOTE
     GM:AddCountdown(math.min(10+5*#GM:GetPlayers(false, {TEAM.SORCERER,TEAM.SAVIOR,TEAM.SHAMAN,TEAM.SEER}),30)) -- 10s and 10s per g
-    GM:Chat(Color(100,0,50), "The night is even darker, some villagers are waking up...")
+
+    local info = "( "
+    if #team.GetPlayers(TEAM.SORCERER) > 0 then info = info..team.GetName(TEAM.SORCERER).." " end
+    if #team.GetPlayers(TEAM.SAVIOR) > 0 then info = info..team.GetName(TEAM.SAVIOR).." " end
+    if #team.GetPlayers(TEAM.SHAMAN) > 0 then info = info..team.GetName(TEAM.SHAMAN).." " end
+    if #team.GetPlayers(TEAM.SEER) > 0 then info = info..team.GetName(TEAM.SEER).." " end
+    info = info..")"
+
+    GM:Chat(Color(100,0,50), lang.msg.deep_night())
+    GM:Chat(Color(200,200,200), info)
     GM:ServerConVars({atmos_dnc_settime = "0"})
     GM:ClientConVars(nil,{
       atmos_dnc_settime = "0",
@@ -984,5 +1011,5 @@ function GM:PlayerDisconnected(ply)
   GM.game.players[id64] = nil
 
   -- chat info
-  GM:Chat(ply:Nick().." disconnected.")
+  GM:Chat(lang.common.disconnected(ply:Nick()))
 end

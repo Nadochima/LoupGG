@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 if CLIENT then
-  SWEP.PrintName = "Life Potion"
+  SWEP.PrintName = lang.item.life_potion.title()
   SWEP.Slot = 1
   SWEP.SlotPos = 1
   SWEP.DrawAmmo = false
@@ -9,7 +9,7 @@ if CLIENT then
 end
 
 SWEP.Author = ""
-SWEP.Instructions = "Left click to save someone\n"
+SWEP.Instructions = lang.item.life_potion.help()
 SWEP.Contact = ""
 SWEP.Purpose = ""
 SWEP.WorldModel = ""
@@ -55,24 +55,24 @@ function SWEP:PrimaryAttack()
     if LoupGG.game.phase == PHASE.NIGHT_POSTVOTE and LoupGG.game.night_vote ~= nil then 
       local p = player.GetBySteamID64(LoupGG.game.night_vote)
       local choices = {
-        {"nobody","nobody"}
+        {"nobody",lang.common.nobody()}
       }
 
       if p then
         table.insert(choices, {LoupGG.game.night_vote, p:Nick()})
       end
 
-      LoupGG:RequestChoice(ply, "Life Potion", choices, function(ply, choice)
+      LoupGG:RequestChoice(ply, lang.item.life_potion.title(), choices, function(ply, choice)
         local p = player.GetBySteamID64(choice)
         local gp = LoupGG.game.players[ply:SteamID64()]
         if gp and p then -- save the target
           LoupGG.game.night_vote = nil 
           gp.life_potion_used = true
-          LoupGG:PlayerChat(ply, Color(0,255,0), "You use your life potion on "..p:Nick()..".")
+          LoupGG:PlayerChat(ply, Color(0,255,0), lang.item.life_potion.used(p:Nick()))
         end
       end)
     else
-      LoupGG:PlayerChat(ply, "You can't use this item.")
+      LoupGG:PlayerChat(ply, lang.item.cant_use())
     end
   end
 end
