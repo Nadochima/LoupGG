@@ -1,9 +1,9 @@
 
-= LoupGG = 
+# LoupGG 
 
-== Configuration ==
+## Configuration 
 
-=== ConVars ===
+### ConVars 
 
 ConVars to put in cfg/game.cfg:
 
