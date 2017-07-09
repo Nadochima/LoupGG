@@ -690,6 +690,11 @@ function GM:OnPhaseChange(pphase,nphase)
     -- trigger deaths
     if GM.game.night_vote then GM:TriggerDeath(GM.game.night_vote) end
     if GM.game.sorcerer_vote then GM:TriggerDeath(GM.game.sorcerer_vote) end
+
+    local werewolves = team.GetPlayers(TEAM.WEREWOLF)
+    for k,v in pairs(werewolves) do
+      v:StripWeapon("weapon_crowbar")
+    end
   end
 
   -- BEGIN
@@ -831,10 +836,12 @@ function GM:OnPhaseChange(pphase,nphase)
     local p = player.GetBySteamID64(GM.game.night_vote or "nobody")
     local gp = GM.game.players[GM.game.night_vote or "nobody"]
     if p and gp and p:Team() ~= TEAM.DEAD then
-      GM:AddCountdown(5)
+      GM:AddCountdown(8)
       -- teleport werewolves to victim house
       local werewolves = team.GetPlayers(TEAM.WEREWOLF)
       for k,v in pairs(werewolves) do
+        v:Give("weapon_crowbar")
+        v:SelectWeapon("weapon_crowbar")
         v:SetPos(gp.house:GetPos())
       end
     end
