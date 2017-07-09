@@ -379,7 +379,7 @@ function GM:TryEndGame()
 end
 
 function GM:ApplyDeath(ply) -- real dead now
-  GM:Chat(Color(50,0,0), ply:Nick().." is dead and was a ", team.GetColor(ply:Team()), team.GetName(ply:Team()))
+  GM:Chat(team.GetColor(ply:Team()), ply:Nick(), Color(255,255,255)," is dead and was a ", team.GetColor(ply:Team()), team.GetName(ply:Team()))
   ply:Kill()
   GM:SetTeam(ply, TEAM.DEAD)
 end
@@ -550,6 +550,8 @@ function GM:DoNextPhase()
   elseif phase == PHASE.NIGHT_VOTE then
     GM:SetPhase(PHASE.NIGHT_POSTVOTE)
   elseif phase == PHASE.NIGHT_POSTVOTE then
+    GM:SetPhase(PHASE.NIGHT_END)
+  elseif phase == PHASE.NIGHT_END then
     GM:SetPhase(PHASE.DAY_VOTE)
   end
 
@@ -684,7 +686,7 @@ function GM:OnPhaseChange(pphase,nphase)
       local seer = seers[1]
       seer:StripWeapon("lgg_seer_eye")
     end
-
+  elseif pphase == PHASE.NIGHT_END then
     -- trigger deaths
     if GM.game.night_vote then GM:TriggerDeath(GM.game.night_vote) end
     if GM.game.sorcerer_vote then GM:TriggerDeath(GM.game.sorcerer_vote) end
@@ -823,6 +825,17 @@ function GM:OnPhaseChange(pphase,nphase)
       if gp then
         seer:Give("lgg_seer_eye")
         gp.seer_ability_used = false
+      end
+    end
+  elseif nphase == PHASE.NIGHT_END then -- feast time!
+    local p = player.GetBySteamID64(GM.game.night_vote or "nobody")
+    local gp = GM.game.players[GM.game.night_vote or "nobody"]
+    if p and gp and p:Team() ~= TEAM.DEAD then
+      GM:AddCountdown(5)
+      -- teleport werewolves to victim house
+      local werewolves = team.GetPlayers(TEAM.WEREWOLF)
+      for k,v in pairs(werewolves) do
+        v:SetPos(gp.house:GetPos())
       end
     end
   end

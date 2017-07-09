@@ -67,8 +67,7 @@ function SWEP:PrimaryAttack()
         local p = player.GetBySteamID64(choice)
         local id64 = ply:SteamID64()
         local gp = LoupGG.game.players[id64]
-        if choice == "" then choice = "nobody" end
-        if gp.vote ~= choice then
+        if choice ~= "" and gp.vote ~= choice then
           local old_vote = gp.vote
 
           if LoupGG.game.players[choice] then

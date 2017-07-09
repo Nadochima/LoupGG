@@ -34,6 +34,7 @@ PHASE = {
   DAY_VOTE = 1, -- day vote
   NIGHT_VOTE = 2,
   NIGHT_POSTVOTE = 3,
+  NIGHT_END = 4
 }
 
 -- init shared game data
