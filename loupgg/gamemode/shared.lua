@@ -23,7 +23,8 @@ TEAM = {
   SEER = 7,
   HUNTER = 8,
   CUPID = 9,
-  SISTER = 10
+  SISTER = 10,
+  SHAMAN = 11
 }
 
 -- init phases
@@ -32,7 +33,6 @@ PHASE = {
   DAY_VOTE = 1, -- day vote
   NIGHT_VOTE = 2,
   NIGHT_POSTVOTE = 3,
-  HUNTER = 4
 }
 
 -- init shared game data
@@ -60,6 +60,7 @@ function GM:CreateTeams()
   team.SetUp(TEAM.HUNTER, "Hunter", Color(104,130,0))
   team.SetUp(TEAM.CUPID, "Cupid", Color(255,0,255))
   team.SetUp(TEAM.SISTER, "Sister", Color(0,135,255))
+  team.SetUp(TEAM.SHAMAN, "Shaman", Color(0,240,252))
 end
 
 -- EXTEND SOME GMOD FUNCTIONS, DANGER ZONE

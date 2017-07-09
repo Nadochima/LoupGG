@@ -200,6 +200,51 @@ function GM:SetTeam(ply, teamid)
   end
 end
 
+-- called to check if a player can hear/read other player voice/chat
+function GM:CanPerceive(listener, talker, is_voice)
+  -- return true to enable hear/read
+
+  if GM.game.phase == PHASE.LOBBY then
+    return true
+  elseif GM.game.phase == PHASE.DAY_VOTE then -- day vote, alives can talk/hear
+    local gpl = GM.game.players[listener:SteamID64()]
+    local gpt = GM.game.players[talker:SteamID64()]
+
+    -- no chat possible at day vote
+    if gpl and gpt and talker:Team() ~= TEAM.DEAD and is_voice then return true end
+  else -- NIGHT
+    local gpl = GM.game.players[listener:SteamID64()]
+    local gpt = GM.game.players[talker:SteamID64()]
+
+    if gpl and gpt then -- playing
+      if listener:Team() ~= TEAM.DEAD and talker:Team() ~= TEAM.DEAD then -- alive
+        -- werewolves
+        if listener:Team() == TEAM.WEREWOLF and talker:Team() == TEAM.WEREWOLF then return true
+        -- lovers
+        elseif gpl.lover == talker:SteamID64() and gpt.lover == listener:SteamID64() then return true
+        -- sisters
+        elseif listener:Team() == TEAM.SISTER and talker:Team() == TEAM.SISTER then return true
+        end
+      -- deads and shaman
+      elseif listener:Team() == TEAM.SHAMAN and talker:Team() == TEAM.DEAD or talker:Team() == TEAM.SHAMAN and listener:Team() == TEAM.DEAD then return true
+      end
+    end
+  end
+
+  -- spectator, everyone and in function of distance for the voice
+  if listener:Team() == TEAM.SPECTATOR then return (listener:GetPos():Distance(talker:GetPos()) <= 40*12) or not is_voice end
+
+  return false
+end
+
+function GM:PlayerCanHearPlayersVoice(listener, talker)
+  return GM:CanPerceive(listener, talker, true)
+end
+
+function GM:PlayerCanSeePlayersChat(txt, team_only, listener, talker)
+  return GM:CanPerceive(listener, talker, false)
+end
+
 -- generate map of TEAM -> number for n players
 function GM:GenerateDeck(n)
   local deck = {}
@@ -215,6 +260,7 @@ function GM:GenerateDeck(n)
   deck[TEAM.SEER] = add(1)
   deck[TEAM.HUNTER] = add(1)
   deck[TEAM.CUPID] = add(1)
+  deck[TEAM.SHAMAN] = add(1)
   deck[TEAM.SAVIOR] = add(1)
   if r >= 2 then
     deck[TEAM.SISTER] = add(2)
