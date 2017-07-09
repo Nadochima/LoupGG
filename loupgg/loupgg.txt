@@ -10,11 +10,11 @@
 	{
 		1
 		{
-			"name"		"lgg_example"
-			"text"		"example"
-			"help"		"example"
-			"type"		"Numeric"
-			"default"	"42"
+			"name"		"lgg_locale"
+			"text"		"LoupGG locale"
+			"help"		"LoupGG locale"
+			"type"		"Text"
+			"default"	"en"
 		}
 	}
 }

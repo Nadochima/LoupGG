@@ -293,7 +293,7 @@ function GM:TriggerDeath(steamid64) -- trigger the special death effects for the
   if gp and p then
     if p:Team() == TEAM.HUNTER then -- hunter death, can kill someone in the next 10 seconds
       GM:AddCountdown(5)
-      GM:Chat(team.GetColor(TEAM.HUNTER), team.GetName(TEAM.HUNTER).." last stand...")
+      GM:Chat(team.GetColor(TEAM.HUNTER), team.GetName(TEAM.HUNTER).." "..lang.hunter.last_stand().."...")
 
       p:Give("weapon_shotgun")
       p:SelectWeapon("weapon_shotgun")
