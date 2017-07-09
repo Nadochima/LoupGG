@@ -101,6 +101,19 @@ function GM:GetHouseSpawns()
 end
 
 function GM:SetTeam(ply, teamid)
+  -- sister check: same house
+  if teamid == TEAM.SISTER then
+    local sisters = team.GetPlayers(TEAM.SISTER)
+    if #sisters >= 1 then
+      local gp = GM.game.players[ply:SteamID64()]
+      local sgp = GM.game.players[sisters[1]:SteamID64()]
+
+      if gp and sgp then
+        gp.house = sgp.house
+      end
+    end
+  end
+
   ply:SetTeam(teamid)
 
   if teamid ~= TEAM.DEAD then
@@ -181,8 +194,8 @@ function GM:SetTeam(ply, teamid)
     end)
   end
 
-  -- share role
-  if teamid == TEAM.WEREWOLF or teamid == TEAM.DEAD then
+  -- shared role tags
+  if teamid == TEAM.WEREWOLF or teamid == TEAM.SISTER or teamid == TEAM.DEAD or teamid == TEAM.SPECTATOR then
     GM:SetTag(team.GetPlayers(teamid), ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
   end
 end
@@ -203,6 +216,9 @@ function GM:GenerateDeck(n)
   deck[TEAM.HUNTER] = add(1)
   deck[TEAM.CUPID] = add(1)
   deck[TEAM.SAVIOR] = add(1)
+  if r >= 2 then
+    deck[TEAM.SISTER] = add(2)
+  end
   deck[TEAM.VILLAGER] = add(r) -- add the rest as villagers
 
   return deck
@@ -609,6 +625,9 @@ function GM:OnPhaseChange(pphase,nphase)
     GM:Chat("You can join the next game by pressing F2.")
   elseif nphase == PHASE.DAY_VOTE then -- DAY VOTE
     GM:Chat(Color(255,255,0), "The sun is rising on the village.")
+
+    local werewolves = team.GetPlayers(TEAM.WEREWOLF)
+
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
       if p and p:Team() ~= TEAM.DEAD then
@@ -617,6 +636,9 @@ function GM:OnPhaseChange(pphase,nphase)
           if v.old_model then
             p:SetModel(v.old_model)
           end
+        else
+          -- show back good alives pseudo for werewolves
+          GM:SetTag(werewolves, k, "pseudo", 1000, Color(255,255,255), p:Nick())
         end
 
         if IsValid(v.seat) then
@@ -635,7 +657,7 @@ function GM:OnPhaseChange(pphase,nphase)
     local good_alives = {}
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
-      if p:Team() ~= TEAM.DEAD and p:Team() ~= TEAM.WEREWOLF then
+      if p and p:Team() ~= TEAM.DEAD and p:Team() ~= TEAM.WEREWOLF then
         table.insert(good_alives, p)
       end
     end
@@ -658,8 +680,13 @@ function GM:OnPhaseChange(pphase,nphase)
       end
     end
 
-    -- start werewolf vote
     local werewolves = team.GetPlayers(TEAM.WEREWOLF)
+    -- hide good alives pseudo for werewolves
+    for k,v in pairs(good_alives) do
+      GM:SetTag(werewolves, v:SteamID64(), "pseudo", -1, Color(255,150,70), "")
+    end
+
+    -- start werewolf vote
     GM.game.night_vote = nil
 
     for k,v in pairs(werewolves) do
