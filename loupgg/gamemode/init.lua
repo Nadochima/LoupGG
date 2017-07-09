@@ -297,7 +297,9 @@ function GM:TriggerDeath(steamid64) -- trigger the special death effects for the
 
       p:Give("weapon_shotgun")
       p:SelectWeapon("weapon_shotgun")
-      p:ExitVehicle()
+      timer.Simple(0.1, function() -- make the hunter exit any vehicle for more easy shooting
+        p:ExitVehicle()
+      end)
 
       if GM.game.phase == PHASE.NIGHT_VOTE then -- can't kill in front, ask target
         local choices = {
