@@ -354,6 +354,8 @@ function GM:CheckEndOfGame()
     local werewolves = 0
     local good_alives = 0
     local players = 0
+    local lover_alives = 0
+    local alives = 0
 
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
@@ -361,10 +363,19 @@ function GM:CheckEndOfGame()
         if p:Team() == TEAM.WEREWOLF then werewolves = werewolves+1 
         elseif p:Team() ~= TEAM.DEAD then good_alives = good_alives+1 end
 
+        if p:Team() ~= TEAM.DEAD then
+          alives = alives+1
+
+          if v.lover ~= nil then
+            lover_alives = lover_alives+1
+          end
+        end
+
         players = players+1
       end
     end
 
+    if alives == 2 and lover_alives == 2 then return true,TEAM.CUPID end
     if werewolves == 0 then return true,TEAM.VILLAGER end
     if good_alives < 2 then return true,TEAM.WEREWOLF end
   end
@@ -728,6 +739,19 @@ function GM:OnPhaseChange(pphase,nphase)
 
     GM.game.players = {}
     GM:Chat("You can join the next game by pressing F2.")
+
+    -- reset effects
+    GM:ServerConVars({atmos_dnc_settime = "12"})
+    GM:ClientConVars(nil,{
+      atmos_dnc_settime = "12",
+      pp_colormod = "0",
+      pp_colormod_brightness = "0",
+      pp_colormod_contrast = "1",
+      pp_colormod_mulr = "0",
+      pp_colormod_mulg = "0",
+      pp_colormod_mulb = "0"
+    })
+
   elseif nphase == PHASE.DAY_VOTE then -- DAY VOTE
     GM:AddCountdown(math.min(10+10*#GM:GetPlayers(true, {-TEAM.DEAD}),120)) -- 10s and 10s per g
 
