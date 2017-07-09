@@ -20,7 +20,8 @@ TEAM = {
   DEAD = 4,
   SORCERER = 5,
   SAVIOR = 6,
-  SEER = 7
+  SEER = 7,
+  HUNTER = 8
 }
 
 -- init phases
@@ -28,7 +29,8 @@ PHASE = {
   LOBBY = 0, -- waiting for people to register for the next game
   DAY_VOTE = 1, -- day vote
   NIGHT_VOTE = 2,
-  NIGHT_POSTVOTE = 3
+  NIGHT_POSTVOTE = 3,
+  HUNTER = 4
 }
 
 -- init shared game data
@@ -53,6 +55,7 @@ function GM:CreateTeams()
   team.SetUp(TEAM.SORCERER, "Sorcerer", Color(255,0,125))
   team.SetUp(TEAM.SAVIOR, "Savior", Color(255,255,0))
   team.SetUp(TEAM.SEER, "Seer", Color(121,33,255))
+  team.SetUp(TEAM.HUNTER, "Hunter", Color(104,130,0))
 end
 
 -- EXTEND SOME GMOD FUNCTIONS, DANGER ZONE

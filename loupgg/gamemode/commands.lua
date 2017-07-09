@@ -141,6 +141,26 @@ GM:RegisterCommand("setrole", true, "nick role", function(ply, args)
   return false
 end)
 
+GM:RegisterCommand("kill", true, "nick", function(ply, args)
+  if #args >= 3 then
+    -- search player
+    for k,v in pairs(GM.game.players) do
+      local p = player.GetBySteamID64(k)
+      if p and string.find(string.upper(p:Nick()), string.upper(args[3])) then
+        GM:TriggerDeath(k)
+        return true
+      end
+    end
+
+    GM:PlayerChat(ply, "Lobby player not found.")
+    return true
+  end
+
+  return false
+end)
+
+
+
 GM:RegisterCommand("map", true, "show|hide", function(ply, args)
   if #args >= 3 then
     if args[3] == "show" then

@@ -68,11 +68,14 @@ end
 function GM:SetPhase(phase)
   local pphase = GM.game.phase
   GM.game.phase = phase
-  if GM.OnPhaseChange then GM:OnPhaseChange(pphase, phase) end -- OnPhaseChange event (old,new)
 
   net.Start("gm_phase")
     net.WriteInt(GM.game.phase,32)
   net.Broadcast()
+
+  print("set phase to "..table.KeyFromValue(PHASE, phase))
+
+  if GM.OnPhaseChange then GM:OnPhaseChange(pphase, phase) end -- OnPhaseChange event (old,new)
 end
 
 function GM:GetVillagerSeats()
@@ -129,6 +132,7 @@ function GM:GenerateDeck(n)
   deck[TEAM.SORCERER] = add(1)
   deck[TEAM.SEER] = add(1)
   deck[TEAM.SAVIOR] = add(1)
+  deck[TEAM.HUNTER] = add(1)
   deck[TEAM.VILLAGER] = add(r) -- add the rest as villagers
 
   return deck
@@ -137,7 +141,41 @@ end
 function GM:TriggerDeath(steamid64) -- trigger the special death effects for the role
   local p = player.GetBySteamID64(steamid64)
   if GM.game.players[steamid64] and p then
-    GM:ApplyDeath(p)
+    if p:Team() == TEAM.HUNTER then -- hunter death, can kill someone in the next 10 seconds
+      GM:Chat(team.GetColor(TEAM.HUNTER), team.GetName(TEAM.HUNTER).." last stand...")
+
+      p:Give("weapon_shotgun")
+      p:SelectWeapon("weapon_shotgun")
+
+      if GM.game.phase == PHASE.NIGHT_VOTE then -- can't kill in front, ask target
+        local choices = {
+          {"nobody","nobody"}
+        }
+        for k,v in pairs(GM.game.players) do
+          local p = player.GetBySteamID64(k)
+          if p and p:Team() ~= TEAM.DEAD then
+            table.insert(choices,{k,p:Nick()})
+          end
+        end
+
+        GM:RequestChoice(p, "Last stand", choices, function(ply, choice)
+          local p = player.GetBySteamID64(choice)
+          if p and p:Team() ~= TEAM.DEAD then -- kill the target
+            GM:TriggerDeath(choice)
+            GM:ApplyDeath(ply)
+          end
+        end)
+      end
+
+      -- timeout hunter last stand
+      timer.Simple(10, function()
+        if p:Team() == TEAM.HUNTER then
+          GM:ApplyDeath(p)
+        end
+      end)
+    else
+      GM:ApplyDeath(p)
+    end
   end
 end
 
@@ -194,7 +232,8 @@ end
 function GM:CountVotes(steamid64)
   local count = 0
   for k,v in pairs(GM.game.players) do
-    if v.vote == steamid64 then
+    local p = player.GetBySteamID64(k)
+    if p and p:Team() ~= TEAM.DEAD and v.vote == steamid64 then
       count = count+1
     end
   end
@@ -355,7 +394,20 @@ function GM:CanExitVehicle(ply, veh)
 end
 
 function GM:CanPlayerEnterVehicle(ply, veh, role)
-  return GM.game.phase == PHASE.DAY_VOTE 
+  return GM.game.phase == PHASE.DAY_VOTE
+end
+
+function GM:EntityTakeDamage(ent, dmg) -- check hunter last stand with shotgun
+  local from = dmg:GetAttacker()
+  if ent:IsPlayer() and from:IsPlayer() then
+    local idfrom = from:SteamID64()
+    local ident = ent:SteamID64()
+
+    if GM.game.players[idfrom] and GM.game.players[ident] and ent:Team() ~= TEAM.DEAD and from:Team() == TEAM.HUNTER then
+      GM:TriggerDeath(ident)
+      GM:ApplyDeath(from)
+    end
+  end
 end
 
 function GM:PlayerInitialSpawn(ply) 
@@ -404,14 +456,6 @@ function GM:OnPhaseChange(pphase,nphase)
       GM:TriggerDeath(id64) -- kill voted
     end
 
-    local good_alives = {}
-    for k,v in pairs(GM.game.players) do
-      local p = player.GetBySteamID64(k)
-      if p:Team() ~= TEAM.DEAD and p:Team() ~= TEAM.WEREWOLF then
-        table.insert(good_alives, p)
-      end
-    end
-
     -- reset stuff
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
@@ -420,19 +464,6 @@ function GM:OnPhaseChange(pphase,nphase)
         GM:SetTag(nil, k, "votes", -1, Color(255,0,0), "")
         GM:SetTag(nil, k, "votefor", -1, Color(255,0,0), "")
         p:ExitVehicle()
-
-        -- send to house if not werewolf
-        if p:Team() ~= TEAM.WEREWOLF then
-          if IsValid(v.house) then
-            p:SetPos(v.house:GetPos())
-          end
-        else -- if werewolf, change skin
-          v.old_model = p:GetModel()
-          p:SetModel("models/player/zombie_fast.mdl")
-
-          -- change werewolf pseudo tag for all good villagers
-          GM:SetTag(good_alives, k, "pseudo", 1000, Color(255,150,70), team.GetName(TEAM.WEREWOLF))
-        end
 
         v.vote = nil
       end
@@ -518,6 +549,32 @@ function GM:OnPhaseChange(pphase,nphase)
     end
   elseif nphase == PHASE.NIGHT_VOTE then -- NIGHT VOTE
     GM:Chat(Color(150,0,0), "The night is falling on the village.")
+
+    local good_alives = {}
+    for k,v in pairs(GM.game.players) do
+      local p = player.GetBySteamID64(k)
+      if p:Team() ~= TEAM.DEAD and p:Team() ~= TEAM.WEREWOLF then
+        table.insert(good_alives, p)
+      end
+    end
+
+    for k,v in pairs(GM.game.players) do
+      local p = player.GetBySteamID64(k)
+      if p and p:Team() ~= TEAM.DEAD then
+        -- send to house if not werewolf
+        if p:Team() ~= TEAM.WEREWOLF then
+          if IsValid(v.house) then
+            p:SetPos(v.house:GetPos())
+          end
+        else -- if werewolf, change skin
+          v.old_model = p:GetModel()
+          p:SetModel("models/player/zombie_fast.mdl")
+
+          -- change werewolf pseudo tag for all good villagers
+          GM:SetTag(good_alives, k, "pseudo", 1000, Color(255,150,70), team.GetName(TEAM.WEREWOLF))
+        end
+      end
+    end
 
     -- start werewolf vote
     local werewolves = team.GetPlayers(TEAM.WEREWOLF)
