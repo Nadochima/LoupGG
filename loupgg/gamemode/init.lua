@@ -103,13 +103,82 @@ end
 function GM:SetTeam(ply, teamid)
   ply:SetTeam(teamid)
 
-  GM:PlayerChat(ply, team.GetColor(teamid), "You are "..team.GetName(teamid)..".")
+  if teamid ~= TEAM.DEAD then
+    GM:PlayerChat(ply, team.GetColor(teamid), "You are "..team.GetName(teamid)..".")
+  end
 
   -- display role tag for the player
   GM:SetTag(ply, ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
 
-  if teamid == TEAM.SPECTATOR or teamid == TEAM.DEAD then
+  if teamid == TEAM.SPECTATOR or teamid == TEAM.DEAD then -- spectate
     ply:Spectate(OBS_MODE_ROAMING)
+  elseif teamid == TEAM.CUPID then -- cupid, ask to create couple
+    local first_lover = nil
+    local second_lover = nil
+
+    local choices = {
+      {"nobody","nobody"}
+    }
+
+    for k,v in pairs(GM.game.players) do
+      local p = player.GetBySteamID64(k)
+      if p and p:Team() ~= TEAM.DEAD then
+        table.insert(choices,{k,p:Nick()})
+      end
+    end
+
+    GM:RequestChoice(ply, "Make couple (1)", choices, function(ply, choice)
+      first_lover = choice
+
+      local choices = {
+        {"nobody","nobody"}
+      }
+
+      for k,v in pairs(GM.game.players) do
+        local p = player.GetBySteamID64(k)
+        if p and p:Team() ~= TEAM.DEAD and k ~= first_lover then
+          table.insert(choices,{k,p:Nick()})
+        end
+      end
+
+      GM:RequestChoice(ply, "Make couple (2)", choices, function(ply, choice)
+        second_lover = choice
+
+        local pkeys = table.GetKeys(GM.game.players)
+
+        -- make couple
+        local fp = player.GetBySteamID64(first_lover)
+        if not fp or not GM.game.players[first_lover] then -- select random
+          local i = math.random(1,#pkeys)
+          first_lover = pkeys[i]
+          table.remove(pkeys, i)
+          fp = player.GetBySteamID64(first_lover)
+        end
+
+        local sp = player.GetBySteamID64(second_lover)
+        if not sp or not GM.game.players[second_lover] or second_lover == first_lover then -- select random
+          local i = math.random(1,#pkeys)
+          second_lover = pkeys[i]
+          sp = player.GetBySteamID64(second_lover)
+        end
+
+        -- assign lovers
+
+        local gfp = GM.game.players[first_lover]
+        local gsp = GM.game.players[second_lover]
+        gfp.lover = second_lover
+        gsp.lover = first_lover
+        gsp.house = gfp.house -- same house
+
+        GM:SetTag(fp, second_lover, "lover", 998, team.GetColor(TEAM.CUPID), "Lover")
+        GM:SetTag(sp, first_lover, "lover", 998, team.GetColor(TEAM.CUPID), "Lover")
+
+        GM:PlayerChat(fp, team.GetColor(TEAM.CUPID), "You are in love with "..sp:Nick()..".")
+        GM:PlayerChat(sp, team.GetColor(TEAM.CUPID), "You are in love with "..fp:Nick()..".")
+
+        GM:PlayerChat(ply, team.GetColor(TEAM.CUPID), fp:Nick().." and "..sp:Nick().." are now in love.")
+      end)
+    end)
   end
 
   -- share role
@@ -131,8 +200,9 @@ function GM:GenerateDeck(n)
   deck[TEAM.WEREWOLF] = add(math.ceil(n*0.25))
   deck[TEAM.SORCERER] = add(1)
   deck[TEAM.SEER] = add(1)
-  deck[TEAM.SAVIOR] = add(1)
   deck[TEAM.HUNTER] = add(1)
+  deck[TEAM.CUPID] = add(1)
+  deck[TEAM.SAVIOR] = add(1)
   deck[TEAM.VILLAGER] = add(r) -- add the rest as villagers
 
   return deck
@@ -140,7 +210,8 @@ end
 
 function GM:TriggerDeath(steamid64) -- trigger the special death effects for the role
   local p = player.GetBySteamID64(steamid64)
-  if GM.game.players[steamid64] and p then
+  local gp = GM.game.players[steamid64]
+  if gp and p then
     if p:Team() == TEAM.HUNTER then -- hunter death, can kill someone in the next 10 seconds
       GM:Chat(team.GetColor(TEAM.HUNTER), team.GetName(TEAM.HUNTER).." last stand...")
 
@@ -175,6 +246,16 @@ function GM:TriggerDeath(steamid64) -- trigger the special death effects for the
       end)
     else
       GM:ApplyDeath(p)
+    end
+
+    if gp.lover ~= nil then -- lovers death
+      local gpl = GM.game.players[gp.lover]
+      local pl = player.GetBySteamID64(gp.lover)
+      if gpl and pl then
+        gpl.lover = nil -- prevent recursive call
+        GM:Chat(team.GetColor(TEAM.CUPID), pl:Nick().." can't survive in this world without "..p:Nick()..".")
+        GM:TriggerDeath(gp.lover)
+      end
     end
   end
 end
@@ -521,6 +602,7 @@ function GM:OnPhaseChange(pphase,nphase)
       v:Spawn()
 
       GM:SetTag(nil, id64, "votefor", -1, Color(255,0,0), "")
+      GM:SetTag(nil, id64, "lover", -1, Color(255,0,0), "")
     end
 
     GM.game.players = {}

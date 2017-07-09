@@ -59,8 +59,8 @@ if SERVER then
     local cb = ch_requests[id64]
     local ans = net.ReadString()
     if cb then
-      cb(ply, ans)
       ch_requests[id64] = nil -- free
+      cb(ply, ans)
     end
   end)
 else -- CLIENT

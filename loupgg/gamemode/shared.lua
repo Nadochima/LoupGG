@@ -21,7 +21,8 @@ TEAM = {
   SORCERER = 5,
   SAVIOR = 6,
   SEER = 7,
-  HUNTER = 8
+  HUNTER = 8,
+  CUPID = 9
 }
 
 -- init phases
@@ -56,6 +57,7 @@ function GM:CreateTeams()
   team.SetUp(TEAM.SAVIOR, "Savior", Color(255,255,0))
   team.SetUp(TEAM.SEER, "Seer", Color(121,33,255))
   team.SetUp(TEAM.HUNTER, "Hunter", Color(104,130,0))
+  team.SetUp(TEAM.CUPID, "Cupid", Color(255,0,255))
 end
 
 -- EXTEND SOME GMOD FUNCTIONS, DANGER ZONE
