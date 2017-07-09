@@ -4,6 +4,7 @@ local GM = GM
 if SERVER then
   util.AddNetworkString("gm_request_choice")
   util.AddNetworkString("gm_player_tag")
+  util.AddNetworkString("gm_convars")
 
   local ch_requests = {}  -- per id 64 requests
 
@@ -46,6 +47,24 @@ if SERVER then
       net.WriteInt(rank,32)
       net.WriteString(value)
     
+    if ply == nil then
+      net.Broadcast()
+    else
+      net.Send(ply)
+    end
+  end
+
+  -- set client(s) convars
+  --- ply: player or table of players, or nil for everyone
+  --- vars: map of convar -> string value
+  function GM:ClientConVars(ply, vars)
+    net.Start("gm_convars")
+      net.WriteInt(table.Count(vars),32)
+      for k,v in pairs(vars) do
+        net.WriteString(k)
+        net.WriteString(v)
+      end
+
     if ply == nil then
       net.Broadcast()
     else
@@ -224,5 +243,23 @@ else -- CLIENT
 
     -- delete sorted_player_tags entry to regenerate
     sorted_player_tags[id64] = nil
+  end)
+
+  -- convars
+  net.Receive("gm_convars", function(len)
+    local size = net.ReadInt(32)
+
+    for i=1,size do
+      local name = net.ReadString()
+      local value = net.ReadString()
+
+      --[[
+      local cvar = GetConVar(name)
+      if cvar then
+        cvar:SetString(value)
+      end
+      --]]
+      RunConsoleCommand(name,value)
+    end
   end)
 end

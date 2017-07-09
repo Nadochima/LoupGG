@@ -24,6 +24,19 @@ GM.game.players = {}
 
 -- API
 
+-- set server convars
+function GM:ServerConVars(vars)
+  for k,v in pairs(vars) do
+    --[[
+    local cvar = GetConVar(k)
+    if cvar then
+      cvar:SetString(v)
+    end
+    --]]
+    RunConsoleCommand(k,v)
+  end
+end
+
 local function build_chat_message(...)
   local args = {...}
   net.WriteInt(#args,32)
@@ -719,6 +732,17 @@ function GM:OnPhaseChange(pphase,nphase)
     GM:AddCountdown(math.min(10+10*#GM:GetPlayers(true, {-TEAM.DEAD}),120)) -- 10s and 10s per g
 
     GM:Chat(Color(255,255,0), "The sun is rising on the village.")
+    GM:ServerConVars({atmos_dnc_settime = "12"})
+    GM:ClientConVars(nil,{
+      atmos_dnc_settime = "12",
+      pp_colormod = "0",
+      pp_colormod_brightness = "0",
+      pp_colormod_contrast = "1",
+      pp_colormod_mulr = "0",
+      pp_colormod_mulg = "0",
+      pp_colormod_mulb = "0"
+    })
+
 
     local werewolves = team.GetPlayers(TEAM.WEREWOLF)
 
@@ -748,8 +772,25 @@ function GM:OnPhaseChange(pphase,nphase)
   elseif nphase == PHASE.NIGHT_VOTE then -- NIGHT VOTE
     GM:AddCountdown(math.min(10+10*#GM:GetPlayers(false, {TEAM.WEREWOLF}),40)) -- 10s and 10s per g
     GM:Chat(Color(150,0,0), "The night is falling on the village.")
+    GM:ServerConVars({atmos_dnc_settime = "20"})
+    GM:ClientConVars(nil,{
+      atmos_dnc_settime = "20",
+      pp_colormod = "1",
+      pp_colormod_brightness = "-0.15",
+      pp_colormod_contrast = "1",
+      pp_colormod_mulr = "5",
+      pp_colormod_mulg = "0",
+      pp_colormod_mulb = "0"
+    })
 
     local good_alives = GM:GetPlayers(true, {-TEAM.DEAD, -TEAM.WEREWOLF})
+
+    local vars_werewolf = {
+      pp_colormod = "1",
+      pp_colormod_mulr = "50",
+      pp_colormod_mulg = "0",
+      pp_colormod_mulb = "0"
+    }
 
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
@@ -762,6 +803,7 @@ function GM:OnPhaseChange(pphase,nphase)
         else -- if werewolf, change skin
           v.old_model = p:GetModel()
           p:SetModel("models/player/zombie_fast.mdl")
+          GM:ClientConVars(p, vars_werewolf)
 
           -- change werewolf pseudo tag for all good villagers
           GM:SetTag(good_alives, k, "pseudo", 1000, Color(255,150,70), team.GetName(TEAM.WEREWOLF))
@@ -809,6 +851,26 @@ function GM:OnPhaseChange(pphase,nphase)
   elseif nphase == PHASE.NIGHT_POSTVOTE then -- NIGHT POST/SAVE VOTE
     GM:AddCountdown(math.min(10+5*#GM:GetPlayers(false, {TEAM.SORCERER,TEAM.SAVIOR,TEAM.SHAMAN,TEAM.SEER}),30)) -- 10s and 10s per g
     GM:Chat(Color(100,0,50), "The night is even darker, some villagers are waking up...")
+    GM:ServerConVars({atmos_dnc_settime = "0"})
+    GM:ClientConVars(nil,{
+      atmos_dnc_settime = "0",
+      pp_colormod = "1",
+      pp_colormod_brightness = "-0.25",
+      pp_colormod_contrast = "1.5",
+      pp_colormod_mulr = "0",
+      pp_colormod_mulg = "0",
+      pp_colormod_mulb = "5"
+    })
+
+    -- reset werewolf red display (overriden)
+    local werewolves = team.GetPlayers(TEAM.WEREWOLF)
+    local vars_werewolf = {
+      pp_colormod = "1",
+      pp_colormod_mulr = "50",
+      pp_colormod_mulg = "0",
+      pp_colormod_mulb = "0"
+    }
+    GM:ClientConVars(werewolves, vars_werewolf)
 
     -- give sorcerer potions
     GM.game.sorcerer_vote = nil
@@ -852,7 +914,10 @@ function GM:InitPostEntity() -- load map
   -- load map 
   local fname = "loupgg/maps/"..game.GetMap()..".txt"
   if file.Exists(fname,"DATA") then
-    local data = util.JSONToTable(file.Read(fname,"DATA"))
+    local data = util.JSONToTable(file.Read(fname,"DATA")) or {}
+    if not data.seats then data.seats = {} end
+    if not data.houses then data.houses = {} end
+
     for k,v in pairs(data.seats) do
       local ent = ents.Create("prop_vehicle_prisoner_pod")
       ent:SetModel("models/nova/airboat_seat.mdl")
