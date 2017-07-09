@@ -2,11 +2,7 @@ include("gui.lua")
 include("lib/lang.lua")
 
 -- load language
-local clocale = GetConVar("lgg_locale")
 local locale = "en"
-if clocale then
-  locale = clocale:GetString()
-end
 
 if SERVER then
   AddCSLuaFile("lang/"..locale..".lua")
