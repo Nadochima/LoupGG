@@ -819,7 +819,7 @@ function GM:OnPhaseChange(pphase,nphase)
     GM:ClientConVars(nil,{
       atmos_dnc_settime = "20",
       pp_colormod = "1",
-      pp_colormod_brightness = "-0.15",
+      pp_colormod_brightness = "-0.01",
       pp_colormod_contrast = "1",
       pp_colormod_mulr = "5",
       pp_colormod_mulg = "0",
@@ -908,7 +908,7 @@ function GM:OnPhaseChange(pphase,nphase)
     GM:ClientConVars(nil,{
       atmos_dnc_settime = "0",
       pp_colormod = "1",
-      pp_colormod_brightness = "-0.25",
+      pp_colormod_brightness = "-0.12",
       pp_colormod_contrast = "1.5",
       pp_colormod_mulr = "0",
       pp_colormod_mulg = "0",

@@ -46,7 +46,7 @@ lang = {
     seer_eye = {
       title = "Troisième oeil",
       help = "Clic gauche pour inspecter quelqu'un\n",
-      inspected = "La voyante a inspecté quelqu'un, un "
+      inspected = "La voyante a inspecté quelqu'un -> "
     },
     life_potion = {
       title = "Potion de Vie",

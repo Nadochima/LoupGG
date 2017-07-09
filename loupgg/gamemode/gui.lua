@@ -97,9 +97,9 @@ else -- CLIENT
   frame:ShowCloseButton(true)
   frame:SetDeleteOnClose(false)
   frame:Center()
-  frame.Paint = function(s , w , h)
-	draw.RoundedBox(0,0,0,w,h,Color(30,30,30,200))
-	draw.RoundedBox(0,0,0,300,25,Color(30,30,30))
+  frame.Paint = function(s, w, h)
+    draw.RoundedBox(0,0,0,w,h,Color(30,30,30,200))
+    draw.RoundedBox(0,0,0,300,25,Color(30,30,30))
   end
 
   frame.OnClose = function()
