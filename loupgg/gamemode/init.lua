@@ -196,7 +196,14 @@ function GM:SetTeam(ply, teamid)
 
   -- shared role tags
   if teamid == TEAM.WEREWOLF or teamid == TEAM.SISTER or teamid == TEAM.DEAD or teamid == TEAM.SPECTATOR then
-    GM:SetTag(team.GetPlayers(teamid), ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
+    local list = team.GetPlayers(teamid)
+    -- new member
+    GM:SetTag(list, ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
+
+    -- already presents members
+    for k,v in pairs(list) do
+      GM:SetTag(ply, v:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
+    end
   end
 end
 
@@ -275,6 +282,7 @@ function GM:TriggerDeath(steamid64) -- trigger the special death effects for the
   local gp = GM.game.players[steamid64]
   if gp and p then
     if p:Team() == TEAM.HUNTER then -- hunter death, can kill someone in the next 10 seconds
+      GM:AddCountdown(5)
       GM:Chat(team.GetColor(TEAM.HUNTER), team.GetName(TEAM.HUNTER).." last stand...")
 
       p:Give("weapon_shotgun")
@@ -424,6 +432,34 @@ function GM:GetMostVoted()
   return kmax
 end
 
+-- return list of players in game
+--- policy_all: if true, will match everyone by default, if false, will math no one by default
+--- team_list: list of teamid, negative teamid will be excluded, or nil for everyone playing
+function GM:GetPlayers(policy_all, team_list)
+  local r = {}
+  for k,v in pairs(GM.game.players) do
+    local p = player.GetBySteamID64(k)
+    if p then
+      if team_list then
+        local excluded = false
+        local ok = policy_all
+        for l,w in pairs(team_list) do
+          if w < 0 and p:Team() == math.abs(w) then excluded = true
+          elseif p:Team() == w then ok = true end
+        end
+
+        if ok and not excluded then
+          table.insert(r, p)
+        end
+      else
+        table.insert(r, p)
+      end
+    end
+  end
+
+  return r
+end
+
 -- events
 
 -- when the timer reach 0, go to the next phase
@@ -495,7 +531,6 @@ function GM:DoNextPhase()
       end
 
       GM:SetPhase(PHASE.DAY_VOTE)
-      GM:AddCountdown(120) -- add 120s
 
       -- add rest in spectators
       local specs = team.GetPlayers(TEAM.NONE)
@@ -508,13 +543,10 @@ function GM:DoNextPhase()
     end
   elseif phase == PHASE.DAY_VOTE then
     GM:SetPhase(PHASE.NIGHT_VOTE)
-    GM:AddCountdown(60)
   elseif phase == PHASE.NIGHT_VOTE then
     GM:SetPhase(PHASE.NIGHT_POSTVOTE)
-    GM:AddCountdown(120)
   elseif phase == PHASE.NIGHT_POSTVOTE then
     GM:SetPhase(PHASE.DAY_VOTE)
-    GM:AddCountdown(120)
   end
 
   GM:TryEndGame()
@@ -578,6 +610,7 @@ end
 
 function GM:PlayerSpawn(ply)
   self.BaseClass.PlayerSpawn(self,ply)
+  ply:SetCustomCollisionCheck(true)
   ply:GodEnable() -- god mode
   if ply:Team() == TEAM.SPECTATOR or ply:Team() == TEAM.DEAD then 
     ply:Spectate(OBS_MODE_ROAMING)
@@ -655,6 +688,8 @@ function GM:OnPhaseChange(pphase,nphase)
 
   -- BEGIN
   if nphase == PHASE.LOBBY then -- LOBBY
+    GM:AddCountdown(30)
+
     -- reset teams
     local players = player.GetAll()
     for k,v in pairs(players) do
@@ -670,6 +705,8 @@ function GM:OnPhaseChange(pphase,nphase)
     GM.game.players = {}
     GM:Chat("You can join the next game by pressing F2.")
   elseif nphase == PHASE.DAY_VOTE then -- DAY VOTE
+    GM:AddCountdown(math.min(10+10*#GM:GetPlayers(true, {-TEAM.DEAD}),120)) -- 10s and 10s per g
+
     GM:Chat(Color(255,255,0), "The sun is rising on the village.")
 
     local werewolves = team.GetPlayers(TEAM.WEREWOLF)
@@ -698,15 +735,10 @@ function GM:OnPhaseChange(pphase,nphase)
       end
     end
   elseif nphase == PHASE.NIGHT_VOTE then -- NIGHT VOTE
+    GM:AddCountdown(math.min(10+10*#GM:GetPlayers(false, {TEAM.WEREWOLF}),40)) -- 10s and 10s per g
     GM:Chat(Color(150,0,0), "The night is falling on the village.")
 
-    local good_alives = {}
-    for k,v in pairs(GM.game.players) do
-      local p = player.GetBySteamID64(k)
-      if p and p:Team() ~= TEAM.DEAD and p:Team() ~= TEAM.WEREWOLF then
-        table.insert(good_alives, p)
-      end
-    end
+    local good_alives = GM:GetPlayers(true, {-TEAM.DEAD, -TEAM.WEREWOLF})
 
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
@@ -764,6 +796,7 @@ function GM:OnPhaseChange(pphase,nphase)
       end)
     end
   elseif nphase == PHASE.NIGHT_POSTVOTE then -- NIGHT POST/SAVE VOTE
+    GM:AddCountdown(math.min(10+5*#GM:GetPlayers(false, {TEAM.SORCERER,TEAM.SAVIOR,TEAM.SHAMAN,TEAM.SEER}),30)) -- 10s and 10s per g
     GM:Chat(Color(100,0,50), "The night is even darker, some villagers are waking up...")
 
     -- give sorcerer potions

@@ -31,4 +31,7 @@ end)
 function GM:OnCountdown()
 end
 
-
+function GM:PlayerSpawn(ply)
+  self.BaseClass.PlayerSpawn(self,ply)
+  ply:SetCustomCollisionCheck(true)
+end

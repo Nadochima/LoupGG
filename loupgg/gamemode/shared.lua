@@ -63,6 +63,15 @@ function GM:CreateTeams()
   team.SetUp(TEAM.SHAMAN, "Shaman", Color(0,240,252))
 end
 
+
+-- disable player collisions
+function GM:ShouldCollide(ent1, ent2)
+  if(IsValid(ent1) and IsValid(ent2) and ent1:IsPlayer() and ent2:IsPlayer()) then
+    return false
+  end
+  return true
+end
+
 -- EXTEND SOME GMOD FUNCTIONS, DANGER ZONE
 
 local Player = FindMetaTable("Player")
