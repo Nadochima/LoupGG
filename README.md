@@ -22,7 +22,7 @@ Some official maintained servers:
 ## Installation
 
 Copy the `loupgg` folder to your `gamemodes` directory, like any other gamemode.
-To use another language than the default english, for example french, you need to edit the file `gamemode/shared.lua` and change the `locale` variable to the correct locale (a file named `<locale>.lua` must be present in `gamemodes/lang/`.
+To use another language than the default english, for example french, you need to edit the file `gamemode/shared.lua` and change the `locale` variable to the correct locale (a file named `<locale>.lua` must be present in `gamemode/lang/`.
 
 ## Configuration
 
