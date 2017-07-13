@@ -303,6 +303,7 @@ else -- CLIENT
       sound = sounds[path]
     end
 
+    sound:Stop()
     sound:PlayEx(volume,pitch)
   end)
 end
