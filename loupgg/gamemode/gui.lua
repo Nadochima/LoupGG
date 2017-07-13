@@ -5,6 +5,7 @@ if SERVER then
   util.AddNetworkString("gm_request_choice")
   util.AddNetworkString("gm_player_tag")
   util.AddNetworkString("gm_convars")
+  util.AddNetworkString("gm_sound")
 
   local ch_requests = {}  -- per id 64 requests
 
@@ -64,6 +65,26 @@ if SERVER then
         net.WriteString(k)
         net.WriteString(v)
       end
+
+    if ply == nil then
+      net.Broadcast()
+    else
+      net.Send(ply)
+    end
+  end
+
+  -- play a non spatialized sound
+  --- ply: player or table of players, or nil for everyone
+  --- volume: 0-1
+  --- pitch: 0-255
+  function GM:PlaySound(ply, path, volume, pitch)
+    if volume == nil then volume = 1 end
+    if pitch == nil then pitch = 100 end
+
+    net.Start("gm_sound")
+      net.WriteString(path)
+      net.WriteFloat(volume)
+      net.WriteInt(pitch,32)
 
     if ply == nil then
       net.Broadcast()
@@ -266,5 +287,22 @@ else -- CLIENT
       --]]
       RunConsoleCommand(name,value)
     end
+  end)
+
+  -- sound
+  local sounds = {}
+  net.Receive("gm_sound", function(len)
+    local path = net.ReadString()
+    local volume = net.ReadFloat()
+    local pitch = net.ReadInt(32)
+
+    -- register the sound
+    local sound = sounds[path]
+    if not sound then
+      sounds[path] = CreateSound(LocalPlayer(), path)
+      sound = sounds[path]
+    end
+
+    sound:PlayEx(volume,pitch)
   end)
 end

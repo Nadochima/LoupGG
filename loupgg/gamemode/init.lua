@@ -400,6 +400,9 @@ end
 
 function GM:ApplyDeath(ply) -- real dead now
   GM:Chat(team.GetColor(ply:Team()), ply:Nick(), Color(255,255,255),lang.common.death(), team.GetColor(ply:Team()), team.GetName(ply:Team()))
+
+  GM:PlaySound(nil, "lgg/death.wav", 0.45, math.random(90,110))
+
   ply:Kill()
   GM:SetTeam(ply, TEAM.DEAD)
 
@@ -773,8 +776,14 @@ function GM:OnPhaseChange(pphase,nphase)
 
   elseif nphase == PHASE.DAY_VOTE then -- DAY VOTE
     GM:AddCountdown(math.min(10+10*#GM:GetPlayers(true, {-TEAM.DEAD}),120)) -- 10s and 10s per g
-
     GM:Chat(Color(255,255,0), lang.msg.day())
+
+    if math.random(0,1) == 0 then
+      GM:PlaySound(nil, "lgg/day.wav", 0.45)
+    else
+      GM:PlaySound(nil, "lgg/day_alt.wav", 0.45)
+    end
+
     GM:ServerConVars({atmos_dnc_settime = "12"})
     GM:ClientConVars(nil,{
       atmos_dnc_settime = "12",
@@ -815,6 +824,8 @@ function GM:OnPhaseChange(pphase,nphase)
   elseif nphase == PHASE.NIGHT_VOTE then -- NIGHT VOTE
     GM:AddCountdown(math.min(10+10*#GM:GetPlayers(false, {TEAM.WEREWOLF}),40)) -- 10s and 10s per g
     GM:Chat(Color(150,0,0), lang.msg.night())
+    GM:PlaySound(nil, "lgg/night.wav", 0.45)
+
     GM:ServerConVars({atmos_dnc_settime = "20"})
     GM:ClientConVars(nil,{
       atmos_dnc_settime = "20",
@@ -902,6 +913,7 @@ function GM:OnPhaseChange(pphase,nphase)
     if #team.GetPlayers(TEAM.SEER) > 0 then info = info..team.GetName(TEAM.SEER).." " end
     info = info..")"
 
+    GM:PlaySound(nil, "lgg/deep_night.wav", 0.45)
     GM:Chat(Color(100,0,50), lang.msg.deep_night())
     GM:Chat(Color(200,200,200), info)
     GM:ServerConVars({atmos_dnc_settime = "0"})
