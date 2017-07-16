@@ -117,7 +117,7 @@ end
 function GM:SetTeam(ply, teamid)
   ply:SetTeam(teamid)
 
-  if teamid ~= TEAM.DEAD then
+  if teamid ~= TEAM.DEAD and teamid ~= TEAM.NONE then
     GM:PlayerChat(ply, team.GetColor(teamid), lang.common.you_are(team.GetName(teamid)))
   end
 
@@ -125,7 +125,15 @@ function GM:SetTeam(ply, teamid)
   GM:SetTag(ply, ply:SteamID64(), "role", 999, team.GetColor(teamid), team.GetName(teamid))
 
   if teamid == TEAM.SPECTATOR or teamid == TEAM.DEAD then -- spectate
+    -- remove pseudo, role, votes, votefor for dead/spectator for playing players
+    local players = GM:GetPlayers(true, {-TEAM.DEAD})
+
     ply:Spectate(OBS_MODE_ROAMING)
+    GM:SetTag(players, ply:SteamID64(), "role", -1, Color(0,0,0), "")
+    GM:SetTag(players, ply:SteamID64(), "pseudo", -1, Color(0,0,0), "")
+    GM:SetTag(players, ply:SteamID64(), "votes", -1, Color(0,0,0), "")
+    GM:SetTag(players, ply:SteamID64(), "votefor", -1, Color(0,0,0), "")
+
   elseif teamid == TEAM.CUPID then -- cupid, ask to create couple
     local first_lover = nil
     local second_lover = nil
@@ -662,6 +670,10 @@ function GM:PlayerSpawn(ply)
 
   if not ply:IsSuperAdmin() then
     ply:StripWeapon("weapon_physgun")
+
+    if not GM.game.phase == PHASE.LOBBY then
+      ply:StripWeapons()
+    end
   end
 
   if ply:Team() == TEAM.SPECTATOR or ply:Team() == TEAM.DEAD then 
@@ -755,6 +767,8 @@ function GM:OnPhaseChange(pphase,nphase)
       GM:SetTeam(v,TEAM.NONE)
       v:Spawn()
 
+      GM:SetTag(nil, id64, "votes", -1, Color(255,0,0), "")
+      GM:SetTag(nil, id64, "role", -1, Color(255,0,0), "")
       GM:SetTag(nil, id64, "votefor", -1, Color(255,0,0), "")
       GM:SetTag(nil, id64, "lover", -1, Color(255,0,0), "")
     end

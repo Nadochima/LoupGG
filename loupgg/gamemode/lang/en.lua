@@ -6,7 +6,7 @@ lang = {
     death = " is dead and was a ",
     connected = "{1} connected.",
     disconnected = "{1} disconnected.",
-    votes = "{1} votes",
+    votes = "{1} vote(s)",
     you_are = "You are {1}."
   },
   lobby = {

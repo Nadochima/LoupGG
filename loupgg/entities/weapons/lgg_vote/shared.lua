@@ -67,7 +67,7 @@ function SWEP:PrimaryAttack()
         local p = player.GetBySteamID64(choice)
         local id64 = ply:SteamID64()
         local gp = LoupGG.game.players[id64]
-        if choice ~= "" and gp.vote ~= choice then
+        if choice ~= "" and gp.vote ~= choice and LoupGG.game.phase == PHASE.DAY_VOTE then
           local old_vote = gp.vote
 
           if LoupGG.game.players[choice] then
@@ -109,7 +109,7 @@ function SWEP:PrimaryAttack()
         local p = player.GetBySteamID64(choice)
         local id64 = ply:SteamID64()
         local gp = LoupGG.game.players[id64]
-        if gp.vote ~= choice then
+        if gp.vote ~= choice and LoupGG.game.phase == PHASE.NIGHT_VOTE then
           local old_vote = gp.vote
 
           if LoupGG.game.players[choice] then
