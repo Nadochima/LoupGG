@@ -1,3 +1,3 @@
 
 -- hook to display game summaries
-lgg_cfg.discord_hook = ""
+--lgg_cfg.discord_webhook = "webhook url"

@@ -68,6 +68,12 @@ function GM:PlayerChat(ply, ...)
   net.Send(ply)
 end
 
+function GM:DiscordMessage(content)
+  if lgg_cfg.discord_webhook then
+    http.Post(lgg_cfg.discord_webhook, { content = content })
+  end
+end
+
 -- add seconds to the countdown
 function GM:AddCountdown(n)
   GM:SetCountdown(GM.game.countdown+n)
@@ -401,6 +407,7 @@ function GM:TryEndGame()
     end
 
     GM:Chat(team.GetColor(winner), lang.common.win(team.GetName(winner)))
+    GM:DiscordMessage(lang.common.win(team.GetName(winner)))
     GM:SetPhase(PHASE.LOBBY)
     GM:SetCountdown(30)
   end
@@ -409,6 +416,7 @@ function GM:TryEndGame()
 end
 
 function GM:ApplyDeath(ply) -- real dead now
+  GM:DiscordMessage(ply:Nick()..lang.common.death()..team.GetName(ply:Team()))
   GM:Chat(team.GetColor(ply:Team()), ply:Nick(), Color(255,255,255),lang.common.death(), team.GetColor(ply:Team()), team.GetName(ply:Team()))
 
   GM:PlaySound(nil, "lgg/death.wav", 0.45, math.random(90,110))
@@ -516,6 +524,7 @@ function GM:DoNextPhase()
     local pcount = table.Count(GM.game.players)
     if pcount >= 4 then
       GM:Chat(Color(0,255,0), lang.lobby.begin(pcount))
+      GM:DiscordMessage(lang.lobby.begin(pcount))
 
       -- give roles to players
       local deck = GM:GenerateDeck(pcount)
