@@ -4,6 +4,7 @@ lang = {
     nobody = "nobody",
     win = "The {1} team win !",
     death = " is dead and was a ",
+    was = " was a ",
     connected = "{1} connected.",
     disconnected = "{1} disconnected.",
     votes = "{1} vote(s)",

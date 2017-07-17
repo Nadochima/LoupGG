@@ -192,7 +192,14 @@ else -- CLIENT
       if IsValid(p) then
         local pos = p:EyePos()+Vector(0,0,7)
         local dist = lp:GetPos():Distance(pos)
-        if dist <= 40*12 then -- one meter is ~=40 inch
+        local max_dist = 0
+        if GM.game.phase == PHASE.DAY_VOTE then
+          max_dist = lgg_cfg.day_tag_vision
+        else
+          max_dist = lgg_cfg.night_tag_vision
+        end
+
+        if dist <= 40*max_dist then -- one meter is ~=40 inch
           local spos = pos:ToScreen()
 
           local shift = -font_height*#v

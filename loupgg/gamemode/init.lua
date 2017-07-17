@@ -235,8 +235,8 @@ function GM:CanPerceive(listener, talker, is_voice)
       local gpl = GM.game.players[listener:SteamID64()]
       local gpt = GM.game.players[talker:SteamID64()]
 
-      -- no chat possible at day vote, only voice chat for the living, everyone can hear
-      if gpl and gpt and talker:Team() ~= TEAM.DEAD and is_voice then return true end
+      -- day vote, only text/voice chat for the living, everyone can hear
+      if gpl and gpt and talker:Team() ~= TEAM.DEAD then return true end
     else -- NIGHT
       local gpl = GM.game.players[listener:SteamID64()]
       local gpt = GM.game.players[talker:SteamID64()]
@@ -306,7 +306,7 @@ end
 function GM:TriggerDeath(steamid64) -- trigger the special death effects for the role
   local p = player.GetBySteamID64(steamid64)
   local gp = GM.game.players[steamid64]
-  if gp and p then
+  if gp and p and p:Team() ~= TEAM.DEAD then
     if p:Team() == TEAM.HUNTER then -- hunter death, can kill someone in the next 10 seconds
       GM:AddCountdown(5)
       GM:Chat(team.GetColor(TEAM.HUNTER), team.GetName(TEAM.HUNTER).." "..lang.hunter.last_stand().."...")
@@ -399,15 +399,32 @@ end
 function GM:TryEndGame()
   local gend,winner = GM:CheckEndOfGame() 
   if gend then
+
+    -- win message
+    GM:Chat(team.GetColor(winner), lang.common.win(team.GetName(winner)))
+    local discord = "```md\n"
+    discord = discord.."## "..lang.common.win(team.GetName(winner)).." ##\n"
+
+    -- display summary
     for k,v in pairs(GM.game.players) do
       local p = player.GetBySteamID64(k)
       if p then
+        local death = {}
+        local ddeath = ""
+        if p:Team() == TEAM.DEAD then
+          death = {team.GetColor(TEAM.DEAD), " ("..team.GetName(TEAM.DEAD)..")"}
+          ddeath = " ("..team.GetName(TEAM.DEAD)..")"
+        end
+
+        GM:Chat(team.GetColor(v.role), p:Nick(), Color(255,255,255),lang.common.was(), team.GetColor(v.role), team.GetName(v.role), unpack(death))
+        discord = discord..p:Nick()..lang.common.was()..team.GetName(v.role)..ddeath.."\n"
+
         p:Kill()
       end
     end
 
-    GM:Chat(team.GetColor(winner), lang.common.win(team.GetName(winner)))
-    GM:DiscordMessage(lang.common.win(team.GetName(winner)))
+    discord = discord.."```"
+    GM:DiscordMessage(discord)
     GM:SetPhase(PHASE.LOBBY)
     GM:SetCountdown(30)
   end
@@ -416,16 +433,17 @@ function GM:TryEndGame()
 end
 
 function GM:ApplyDeath(ply) -- real dead now
-  GM:DiscordMessage(ply:Nick()..lang.common.death()..team.GetName(ply:Team()))
-  GM:Chat(team.GetColor(ply:Team()), ply:Nick(), Color(255,255,255),lang.common.death(), team.GetColor(ply:Team()), team.GetName(ply:Team()))
+  if ply:Team() ~= TEAM.DEAD then
+    GM:Chat(team.GetColor(ply:Team()), ply:Nick(), Color(255,255,255),lang.common.death(), team.GetColor(ply:Team()), team.GetName(ply:Team()))
 
-  GM:PlaySound(nil, "lgg/death.wav", 0.45, math.random(90,110))
+    GM:PlaySound(nil, "lgg/death.wav", 0.45, math.random(90,110))
 
-  ply:Kill()
-  GM:SetTeam(ply, TEAM.DEAD)
+    ply:Kill()
+    GM:SetTeam(ply, TEAM.DEAD)
 
-  if GM:CheckEndOfGame() then -- update game state
-    GM:SetCountdown(0)
+    if GM:CheckEndOfGame() then -- update game state
+      GM:SetCountdown(0)
+    end
   end
 end
 
@@ -524,7 +542,6 @@ function GM:DoNextPhase()
     local pcount = table.Count(GM.game.players)
     if pcount >= 4 then
       GM:Chat(Color(0,255,0), lang.lobby.begin(pcount))
-      GM:DiscordMessage(lang.lobby.begin(pcount))
 
       -- give roles to players
       local deck = GM:GenerateDeck(pcount)
@@ -553,6 +570,7 @@ function GM:DoNextPhase()
 
           -- set role
           GM:SetTeam(p, selected_role)
+          v.role = selected_role
           if not p:Alive() then
             p:Spawn()
           end
@@ -682,7 +700,7 @@ function GM:PlayerSpawn(ply)
   if not ply:IsSuperAdmin() then
     ply:StripWeapon("weapon_physgun")
 
-    if not GM.game.phase == PHASE.LOBBY then
+    if not (GM.game.phase == PHASE.LOBBY) then
       ply:StripWeapons()
     end
   end
