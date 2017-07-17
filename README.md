@@ -17,7 +17,7 @@ The gamemode is "LoupGG" in the Gmod server list.
 
 Some official maintained servers:
 
-* (FR) 62.210.168.151:27015
+* (FR) 137.74.129.187:27015
 * (FR) 93.115.96.185:27015
 
 ## Installation
