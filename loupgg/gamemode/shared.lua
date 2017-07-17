@@ -1,13 +1,20 @@
 include("gui.lua")
 include("lib/lang.lua")
 
--- load language
-local locale = "en"
-
+-- load cfg
+lgg_cfg = {}
+include("cfg/shared.lua")
 if SERVER then
-  AddCSLuaFile("lang/"..locale..".lua")
+  include("cfg/server.lua")
+else
+  include("cfg/client.lua")
 end
-include("lang/"..locale..".lua")
+
+-- load language
+if SERVER then
+  AddCSLuaFile("lang/"..lgg_cfg.lang..".lua")
+end
+include("lang/"..lgg_cfg.lang..".lua")
 lang = Lang.new(lang or {})
 
 

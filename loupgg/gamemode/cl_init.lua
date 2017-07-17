@@ -1,6 +1,7 @@
 local GM = GM
 
 include("shared.lua")
+include("cfg/client.lua")
 include("fonts.lua")
 
 -- net events

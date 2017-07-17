@@ -1,5 +1,7 @@
 AddCSLuaFile("cl_init.lua")
 AddCSLuaFile("shared.lua")
+AddCSLuaFile("cfg/shared.lua")
+AddCSLuaFile("cfg/client.lua")
 AddCSLuaFile("fonts.lua")
 AddCSLuaFile("commands.lua")
 AddCSLuaFile("gui.lua")
