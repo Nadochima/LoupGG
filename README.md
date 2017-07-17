@@ -10,6 +10,7 @@ The project is completely open-source.
 * discord: https://discord.gg/q8QdfrX
 * ts: 62.210.168.151
 * map: http://steamcommunity.com/sharedfiles/filedetails/?id=966255479
+* addons: http://steamcommunity.com/workshop/filedetails/?id=971572823
 
 ### Servers
 
@@ -23,8 +24,11 @@ Some official maintained servers:
 ## Installation
 
 Copy the `loupgg` folder to your `gamemodes` directory, like any other gamemode.
-To use another language than the default english, for example french, you need to edit the file `gamemode/shared.lua` and change the `locale` variable to the correct locale (a file named `<locale>.lua` must be present in `gamemode/lang/`.
+To use another language than the default english, for example french, you need to edit the file `cfg/shared.lua` and change the `lang` variable to the correct language (a file named `<lang>.lua` must be present in `gamemode/lang/`.
 
 ## Configuration
+
+Everything is in the `cfg/` directory, `cfg/server.lua`, `cfg/client.lua` and `cfg/shared.lua`.
+Never put credentials in shared and client.
 
 ### ConVars
