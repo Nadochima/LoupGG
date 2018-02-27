@@ -8,7 +8,6 @@ The project is completely open-source.
 
 * group steam: http://steamcommunity.com/groups/LoupGG
 * discord: https://discord.gg/q8QdfrX
-* ts: 62.210.168.151
 * map: http://steamcommunity.com/sharedfiles/filedetails/?id=966255479
 * addons: http://steamcommunity.com/workshop/filedetails/?id=971572823
 
