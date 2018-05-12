@@ -1,6 +1,5 @@
 -- shared
 local GM = GM
-
 if SERVER then
   util.AddNetworkString("gm_request_choice")
   util.AddNetworkString("gm_player_tag")
@@ -161,8 +160,14 @@ else -- CLIENT
 
   function GM:HUDPaint()
     -- countdown
-    draw.DrawText(GM.game.countdown, "LoupGG_countdown", 5, 5, Color(255,255,255))
+    --draw.RoundedBox(15,ScrW()/95,ScrW()/95,ScrW()/10,ScrW()/10,Color(255,228,173))
+    draw.SimpleText(GM.game.countdown,"LoupGG_countdown",(ScrW()/95)+(ScrW()/10)/2,(ScrW()/95)+(ScrW()/10)/2,Color(255,255,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
 
+    --draw.RoundedBox(3,ScrW()/1.5,ScrW()/95,ScrW()-(ScrW()/1.48),ScrH()/20,Color(255,228,173))
+    --draw.RoundedBox(3,(ScrW()/1.5)+(ScrW()-(ScrW()/1.48))/1.5,ScrW()/95,(ScrW()-(ScrW()/1.48))/3,ScrH()/20,Color(255, 190, 0, 100))
+    draw.SimpleText("Role : "..team.GetName(LocalPlayer():Team()),"LoupGG_Title",(ScrW()/1.5)+(ScrW()-(ScrW()/1.48))/30,(ScrW()/20)/2,Color(255,255,255),TEXT_ALIGN_LEFT,TEXT_ALIGN_CENTER)
+    draw.SimpleText("F4 show info","LoupGG_Title",((ScrW()/1.5)+(ScrW()-(ScrW()/1.48))/1.5)+((ScrW()-(ScrW()/1.48))/3)/2,(ScrW()/20)/2,Color(255,255,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+    
     -- check tags update
     for k,v in pairs(player_tags) do
       local tags = sorted_player_tags[k]
@@ -181,6 +186,7 @@ else -- CLIENT
         --- sort
         table.sort(tags, sort_ptag)
       end
+
     end
 
     -- display player tags

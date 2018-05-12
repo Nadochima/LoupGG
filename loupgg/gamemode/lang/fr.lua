@@ -1,5 +1,11 @@
 
 lang = {
+  pointshop = {
+    givemsg = "Vous avez reçu {1} Pointshop"
+  },
+  ui = {
+    role = "Rôle : "
+  },
   common = {
     nobody = "personne",
     win = "L'équipe {1} gagne !",

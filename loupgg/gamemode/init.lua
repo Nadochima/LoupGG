@@ -419,6 +419,8 @@ function GM:TryEndGame()
         GM:Chat(team.GetColor(v.role), p:Nick(), Color(255,255,255),lang.common.was(), team.GetColor(v.role), team.GetName(v.role), unpack(death))
         discord = discord..p:Nick()..lang.common.was()..team.GetName(v.role)..ddeath.."\n"
 
+        if lgg_cfg.pointshop then p:PS_GivePoints(lgg_cfg.pointshopGive) p:PS_Notify(lang.pointshop.givemsg(lgg_cfg.pointshopGive)) end
+
         p:Kill()
       end
     end

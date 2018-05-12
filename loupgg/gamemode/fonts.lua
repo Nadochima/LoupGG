@@ -1,8 +1,8 @@
 
 surface.CreateFont("LoupGG_countdown", {
-  font = "Arial", 
+  font = "Roboto", 
   extended = false,
-  size = 75,
+  size = 65,
   weight = 500,
   blursize = 0,
   scanlines = 0,
@@ -12,15 +12,15 @@ surface.CreateFont("LoupGG_countdown", {
   strikeout = false,
   symbol = false,
   rotary = false,
-  shadow = true,
+  shadow = false,
   additive = false,
   outline = false,
 })
 
 surface.CreateFont("LoupGG_tag", {
-  font = "Arial", 
+  font = "Roboto", 
   extended = false,
-  size = 21,
+  size = 20,
   weight = 2000,
   blursize = 0,
   scanlines = 0,
@@ -34,3 +34,23 @@ surface.CreateFont("LoupGG_tag", {
   additive = false,
   outline = false,
 })
+
+
+surface.CreateFont("LoupGG_Title", {
+  font = "Roboto", 
+  extended = false,
+  size = 25,
+  weight = 800,
+  blursize = 0,
+  scanlines = 0,
+  antialias = true,
+  underline = false,
+  italic = false,
+  strikeout = false,
+  symbol = false,
+  rotary = false,
+  shadow = false,
+  additive = false,
+  outline = false,
+})
+
