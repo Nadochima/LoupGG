@@ -160,19 +160,43 @@ else -- CLIENT
 
 
   function GM:HUDPaint()
+  local animtime = (CurTime()*8)
+  if lgg_cfg.timerhud == 1 then 
+    surface.SetDrawColor(Color(142,92,51))
+    surface.SetMaterial(Material("materials/loupgg/loupgg_spwheel1.png"))
+    surface.DrawTexturedRectRotated((ScrW()/18),(ScrW()/10),(ScrW()/12),(ScrW()/12),-animtime*2)
+    surface.SetMaterial(Material("materials/loupgg/loupgg_spwheel2.png"))
+    surface.DrawTexturedRectRotated((ScrW()/10),(ScrW()/20),(ScrW()/16),(ScrW()/16),animtime*2)
+    surface.SetDrawColor(Color(114,75,45))
+    surface.SetMaterial(Material("materials/loupgg/loupgg_spbase.png"))
+    surface.DrawTexturedRectRotated((ScrW()/15),(ScrW()/15),(ScrW()/10),(ScrW()/10),animtime)
+    surface.SetDrawColor(Color(166,105,51))
+    surface.SetMaterial(Material("materials/loupgg/loupgg_spbase.png"))
+    surface.DrawTexturedRectRotated((ScrW()/15),(ScrW()/15),(ScrW()/13),(ScrW()/13),-animtime*2)
+    draw.SimpleText(GM.game.countdown,"LoupGG_Title",(ScrW()/15),(ScrW()/15),color_white,1,1)
+  elseif lgg_cfg.timerhud == 2 then
+    surface.SetDrawColor(Color(142,92,51))
+    surface.SetMaterial(Material("materials/loupgg/loupgg_spwheel1.png"))
+    surface.DrawTexturedRectRotated((ScrW()/32),(ScrW()/20),(ScrW()/18),(ScrW()/18),-animtime*2)
+    surface.SetMaterial(Material("materials/loupgg/loupgg_spwheel1.png"))
+    surface.DrawTexturedRectRotated((ScrW()/11),(ScrW()/10),(ScrW()/12),(ScrW()/12),animtime*2)
+    surface.SetMaterial(Material("materials/loupgg/loupgg_spwheel2.png"))
+    surface.DrawTexturedRectRotated((ScrW()/10),(ScrW()/16/1.8),(ScrW()/16),(ScrW()/16),-animtime*2)
+    surface.SetDrawColor(Color(114,75,45))
+    surface.SetMaterial(Material("materials/loupgg/loupgg_spbase.png"))
+    surface.DrawTexturedRectRotated((ScrW()/15),(ScrW()/15),(ScrW()/10),(ScrW()/10),animtime)
+    surface.SetDrawColor(Color(156,98,51))
+    surface.SetMaterial(Material("materials/loupgg/loupgg_spbase.png"))
+    surface.DrawTexturedRectRotated((ScrW()/15),(ScrW()/15),(ScrW()/13),(ScrW()/13),-animtime*2)
+    draw.SimpleText(GM.game.countdown,"LoupGG_Title",(ScrW()/15),ScrW()/15,color_white,1,1)
+  end 
 
-    -- countdown
-    --draw.RoundedBox(15,ScrW()/95,ScrW()/95,ScrW()/10,ScrW()/10,Color(255,228,173))
-    draw.SimpleText(GM.game.countdown,"LoupGG_countdown",(ScrW()/95)+(ScrW()/10)/2,(ScrW()/95)+(ScrW()/10)/2,Color(255,255,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
-
-    --draw.RoundedBox(3,ScrW()/1.5,ScrW()/95,ScrW()-(ScrW()/1.48),ScrH()/20,Color(255,228,173))
-    --draw.RoundedBox(3,(ScrW()/1.5)+(ScrW()-(ScrW()/1.48))/1.5,ScrW()/95,(ScrW()-(ScrW()/1.48))/3,ScrH()/20,Color(255, 190, 0, 100))
+  if lgg_cfg.infohud then
     surface.SetMaterial(Material("materials/loupgg/loupgg_ui01.png"))
     surface.SetDrawColor(color_white)
     surface.DrawTexturedRect((ScrW()-ScrW()/2.5),0,ScrW()/2.5,(ScrW()/2.5/5))
     draw.SimpleText(team.GetName(LocalPlayer():Team()),"LoupGG_Title",(ScrW()-ScrW()/2.5)+(ScrW()/2.5)/3.9,(ScrW()/2.5/5)/1.55,Color(5,5,5),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
---    draw.SimpleText("F4 show info","LoupGG_Title",((ScrW()/1.5)+(ScrW()-(ScrW()/1.48))/1.5)+((ScrW()-(ScrW()/1.48))/3)/2,(ScrW()/20)/2,Color(255,255,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
-    
+  end
     -- check tags update
     for k,v in pairs(player_tags) do
       local tags = sorted_player_tags[k]
