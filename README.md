@@ -4,6 +4,8 @@
 Loups-Garous GMOD (LoupGG or LGG) is a gamemode for Garry's Mod inspired from [Les Loups-Garous de Thiercelieux](https://fr.wikipedia.org/wiki/Les_Loups-garous_de_Thiercelieux) created by [Philippe des Pallières](https://fr.wikipedia.org/wiki/Philippe_des_Palli%C3%A8res) and [Hervé Marly](https://fr.wikipedia.org/wiki/Herv%C3%A9_Marly).
 The project is completely open-source.
 
+- Support Pointshop and Pointshop2
+
 ## Links
 
 * group steam: http://steamcommunity.com/groups/LoupGG
@@ -18,6 +20,7 @@ The gamemode is "LoupGG" in the Gmod server list.
 ## Installation
 
 Copy the `loupgg` folder to your `gamemodes` directory, like any other gamemode.
+Copy the 'loupgg_content' folder to your 'addons' directory.
 To use another language than the default english, for example french, you need to edit the file `cfg/shared.lua` and change the `lang` variable to the correct language (a file named `<lang>.lua` must be present in `gamemode/lang/`.
 
 You will need the addons collection for the server and the clients.
