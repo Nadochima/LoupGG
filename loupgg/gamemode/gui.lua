@@ -158,15 +158,20 @@ else -- CLIENT
 
   -- DISPLAY
 
+
   function GM:HUDPaint()
+
     -- countdown
     --draw.RoundedBox(15,ScrW()/95,ScrW()/95,ScrW()/10,ScrW()/10,Color(255,228,173))
     draw.SimpleText(GM.game.countdown,"LoupGG_countdown",(ScrW()/95)+(ScrW()/10)/2,(ScrW()/95)+(ScrW()/10)/2,Color(255,255,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
 
     --draw.RoundedBox(3,ScrW()/1.5,ScrW()/95,ScrW()-(ScrW()/1.48),ScrH()/20,Color(255,228,173))
     --draw.RoundedBox(3,(ScrW()/1.5)+(ScrW()-(ScrW()/1.48))/1.5,ScrW()/95,(ScrW()-(ScrW()/1.48))/3,ScrH()/20,Color(255, 190, 0, 100))
-    draw.SimpleText("Role : "..team.GetName(LocalPlayer():Team()),"LoupGG_Title",(ScrW()/1.5)+(ScrW()-(ScrW()/1.48))/30,(ScrW()/20)/2,Color(255,255,255),TEXT_ALIGN_LEFT,TEXT_ALIGN_CENTER)
-    draw.SimpleText("F4 show info","LoupGG_Title",((ScrW()/1.5)+(ScrW()-(ScrW()/1.48))/1.5)+((ScrW()-(ScrW()/1.48))/3)/2,(ScrW()/20)/2,Color(255,255,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+    surface.SetMaterial(Material("materials/loupgg/loupgg_ui01.png"))
+    surface.SetDrawColor(color_white)
+    surface.DrawTexturedRect((ScrW()-ScrW()/2.5),0,ScrW()/2.5,(ScrW()/2.5/5))
+    draw.SimpleText(team.GetName(LocalPlayer():Team()),"LoupGG_Title",(ScrW()-ScrW()/2.5)+(ScrW()/2.5)/3.9,(ScrW()/2.5/5)/1.55,Color(5,5,5),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
+--    draw.SimpleText("F4 show info","LoupGG_Title",((ScrW()/1.5)+(ScrW()-(ScrW()/1.48))/1.5)+((ScrW()-(ScrW()/1.48))/3)/2,(ScrW()/20)/2,Color(255,255,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER)
     
     -- check tags update
     for k,v in pairs(player_tags) do

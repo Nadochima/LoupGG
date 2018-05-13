@@ -420,7 +420,7 @@ function GM:TryEndGame()
         discord = discord..p:Nick()..lang.common.was()..team.GetName(v.role)..ddeath.."\n"
 
         if lgg_cfg.pointshop then p:PS_GivePoints(lgg_cfg.pointshopGive) p:PS_Notify(lang.pointshop.givemsg(lgg_cfg.pointshopGive)) end
-
+        if lgg_cfg.pointshop2 then p:PS2_AddStandardPoints(lgg_cfg.pointshop2Give, lang.pointshop2.givemsg(lgg_cfg.pointshopGive), false) if table.HasValue( lgg_cfg.pointshop2UserGroup, p:GetUserGroup()) then p:PS2_AddPremiumPoints(lgg_cfg.pointshop2GivePremiun) p:PS_Notify(lang.pointshop2.givemsgpremiun(lgg_cfg.pointshop2GivePremiun)) end end
         p:Kill()
       end
     end

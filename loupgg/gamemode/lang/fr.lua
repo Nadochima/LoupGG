@@ -3,6 +3,10 @@ lang = {
   pointshop = {
     givemsg = "Vous avez reçu {1} Pointshop"
   },
+  pointshop2 = {
+    givemsg = "Vous avez reçu {1} Pointshop",
+    givemsgpremiun = "Vous avez reçu {1} Pointshop premium"
+  },
   ui = {
     role = "Rôle : "
   },
