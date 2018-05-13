@@ -1,0 +1,1 @@
+resource.AddFile( "materials/loupgg/loupgg_ui01.png" )
