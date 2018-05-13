@@ -20,6 +20,7 @@ The gamemode is "LoupGG" in the Gmod server list.
 ## Installation
 
 Copy the `loupgg` folder to your `gamemodes` directory, like any other gamemode.
+Copy the 'loupgg_content' folder to your 'addons' directory.
 To use another language than the default english, for example french, you need to edit the file `cfg/shared.lua` and change the `lang` variable to the correct language (a file named `<lang>.lua` must be present in `gamemode/lang/`.
 
 You will need the addons collection for the server and the clients.
