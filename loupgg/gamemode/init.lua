@@ -536,6 +536,13 @@ function GM:DoNextPhase()
   local phase = GM.game.phase
   if phase == PHASE.LOBBY then -- START A GAME
     -- bots auto join (for testing)
+    if game.GetMap() == "lgg_village_v1" then
+      for key, ent in pairs(ents.FindByName("lgg_window")) do
+        if IsValid( ent ) then
+          ent:Fire( "open" )
+        end
+      end
+    end
     local bots = player.GetBots()
     for k,v in pairs(bots) do
       GM:ShowTeam(v)
@@ -627,11 +634,25 @@ function GM:DoNextPhase()
     end
   elseif phase == PHASE.DAY_VOTE then
     GM:SetPhase(PHASE.NIGHT_VOTE)
+    if game.GetMap() == "lgg_village_v1" then
+      for key, ent in pairs(ents.FindByName("lgg_window")) do
+        if IsValid( ent ) then
+          ent:Fire( "close" )
+        end
+      end
+    end
   elseif phase == PHASE.NIGHT_VOTE then
     GM:SetPhase(PHASE.NIGHT_POSTVOTE)
   elseif phase == PHASE.NIGHT_POSTVOTE then
     GM:SetPhase(PHASE.NIGHT_END)
   elseif phase == PHASE.NIGHT_END then
+    if game.GetMap() == "lgg_village_v1" then
+      for key, ent in pairs(ents.FindByName("lgg_window")) do
+        if IsValid( ent ) then
+          ent:Fire( "open" )
+        end
+      end
+    end
     GM:SetPhase(PHASE.DAY_VOTE)
   end
 
