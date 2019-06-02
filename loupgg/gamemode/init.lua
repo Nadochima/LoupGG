@@ -1093,3 +1093,11 @@ function GM:PlayerDisconnected(ply)
   -- chat info
   GM:Chat(lang.common.disconnected(ply:Nick()))
 end
+
+function GM:ShowSpare2(ply)
+  if lgg_cfg.lang == "fr" then
+    ply:SendLua( "gui.OpenURL( 'https://fr.wikipedia.org/wiki/Les_Loups-garous_de_Thiercelieux' )" )
+  else
+    ply:SendLua( "gui.OpenURL( 'https://en.wikipedia.org/wiki/The_Werewolves_of_Millers_Hollow' )" )
+  end
+end
